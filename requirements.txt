@@ -1,0 +1,21 @@
+# ML and Signal Processing
+numpy>=1.24
+scikit-learn>=1.2
+joblib>=1.2
+
+# Real-Time Input
+pynput>=1.7
+
+# Hugging Face & Transformers
+transformers>=4.38
+accelerate>=0.26
+safetensors>=0.4
+huggingface_hub>=0.22
+
+# Environment Handling
+python-dotenv>=1.0
+
+# Optional: UI or Graphing (future upgrades)
+# streamlit>=1.32
+# matplotlib>=3.7
+# altair>=5.0
