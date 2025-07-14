@@ -6,8 +6,10 @@ from scipy.signal import find_peaks
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 from joblib import dump
 from xgboost import XGBClassifier
+import pandas as pd
 
 
 def load_wesad_subject(subject_id, data_dir="./WESAD"):
@@ -23,18 +25,18 @@ def compute_rmssd(ibi_series):
     diff = np.diff(ibi_series)
     return np.sqrt(np.mean(diff ** 2)) if len(diff) > 1 else 0
 
+
 def extract_hrv_features_labels(subject_data, sampling_rate=700):
     ecg = subject_data['signal']['chest']['ECG'][:, 0]
     labels = subject_data['label']
 
-
-    peaks, _ = find_peaks(ecg, distance=sampling_rate*0.6, height=np.mean(ecg))
-    ibi = np.diff(peaks) / sampling_rate  
+    peaks, _ = find_peaks(ecg, distance=sampling_rate * 0.6, height=np.mean(ecg))
+    ibi = np.diff(peaks) / sampling_rate
 
     rmssd_series = []
     rmssd_timestamps = []
 
-    window_size = 20 
+    window_size = 20
     stride = 5
 
     for i in range(0, len(ibi) - window_size, stride):
@@ -47,23 +49,21 @@ def extract_hrv_features_labels(subject_data, sampling_rate=700):
     rmssd_series = np.array(rmssd_series)
     rmssd_timestamps = np.array(rmssd_timestamps)
 
-    scaler = StandardScaler()
-    rmssd_series = scaler.fit_transform(rmssd_series.reshape(-1, 1)).flatten()
-
     label_array = np.array([subject_data['label'][t] for t in rmssd_timestamps])
     mask = np.isin(label_array, [1, 2, 3])
-    features = rmssd_series[mask]
+    features = rmssd_series[mask].reshape(-1, 1)
     labels = label_array[mask]
     binary_labels = (labels == 2).astype(int)
 
     return features, binary_labels
+
 
 def create_windows(data, labels, window_size=60, stride=30):
     X, y = [], []
     for i in range(0, len(data) - window_size, stride):
         window = data[i:i + window_size]
         label = int(np.round(np.mean(labels[i:i + window_size])))
-        X.append(window)
+        X.append(window.mean(axis=0))
         y.append(label)
     return np.array(X), np.array(y)
 
@@ -73,9 +73,9 @@ def train_model(X, y):
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    neg, pos = np.bincount(y_train)
-    scale_pos_weight = neg / pos
-    print(f"Class balance: non-stress={neg}, stress={pos}, scale_pos_weight={scale_pos_weight:.2f}")
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
 
     model = XGBClassifier(
         n_estimators=100,
@@ -83,37 +83,71 @@ def train_model(X, y):
         learning_rate=0.1,
         subsample=0.8,
         colsample_bytree=0.8,
-        scale_pos_weight=scale_pos_weight,
+        scale_pos_weight=(len(y_train) - sum(y_train)) / sum(y_train),
         use_label_encoder=False,
         eval_metric="logloss"
     )
-    model.fit(X_train, y_train)
+    model.fit(X_train_scaled, y_train)
 
-    preds = model.predict(X_test)
     print("Evaluation on test set:")
+    preds = model.predict(X_test_scaled)
     print(classification_report(y_test, preds))
 
-    scores = predict_stress_score(model, X_test)
-    print("Example stress scores ([-1, 1]):", scores[:10])
-    plot_score_distribution(scores, y_test)
+    logits_train = model.predict_proba(X_train_scaled)[:, 1]
+    z_scores = X_train_scaled.flatten()
+    reg = LinearRegression().fit(z_scores.reshape(-1, 1), logits_train)
+    alpha, beta = reg.coef_[0], reg.intercept_
+    print(f"Learned scoring parameters: alpha = {alpha:.4f}, beta = {beta:.4f}")
 
-    return model
+    test_raw_vals = X_test.flatten()
+    z = (test_raw_vals - scaler.mean_[0]) / scaler.scale_[0]
+    logits_test = alpha * z + beta
 
-def predict_stress_score(model, X):
-    probs = model.predict_proba(X)[:, 1]
-    scores = 2 * probs - 1
-    return scores
+    logits_centered = logits_test - 0.5
 
+    scale = 2.0 / np.percentile(np.abs(alpha * z_scores + beta - 0.5), 95)
 
-def plot_score_distribution(scores, labels):
-    plt.hist(scores[labels == 0], bins=50, alpha=0.5, label="Non-Stress", density=True)
-    plt.hist(scores[labels == 1], bins=50, alpha=0.5, label="Stress", density=True)
-    plt.legend()
-    plt.title("Stress Score Distribution [-1, 1] (HRV)")
+    score = np.tanh(logits_centered * scale)
+
+    pred_labels = model.predict(X_test_scaled)
+
+    print("\n=== Detailed HRV Insight Table ===")
+    for i in range(len(test_raw_vals)):
+        print(f"[{i:02}] HRV: {test_raw_vals[i]:.4f} | z: {z[i]:.4f} | Score: {score[i]:.4f} "
+              f"| True: {'Stress' if y_test[i] == 1 else 'Non-Stress'} "
+              f"| Pred: {'Stress' if pred_labels[i] == 1 else 'Non-Stress'}")
+
+    score_table = pd.DataFrame({
+        "HRV (RMSSD)": test_raw_vals,
+        "z-score": z,
+        "Logit (αz+β)": logits_test,
+        "Stress Score (tanh)": score,
+        "True Label": y_test,
+        "Prediction": pred_labels,
+        "True Interpretation": ["Stress" if l == 1 else "Non-Stress" for l in y_test],
+        "Predicted Interpretation": ["Stress" if p == 1 else "Non-Stress" for p in pred_labels]
+    })
+
+    print("\n=== Preview of Score Table ===")
+    print(score_table.head(10))
+
+    os.makedirs("exports", exist_ok=True)
+    score_table.to_excel("exports/hrv_stress_scores_detailed.xlsx", index=False)
+    print("Detailed score log saved to 'exports/hrv_stress_scores_detailed.xlsx'.")
+
+    # Plot score distributions
+    plt.hist(score[y_test == 0], bins=40, alpha=0.6, label="Non-Stress", density=True)
+    plt.hist(score[y_test == 1], bins=40, alpha=0.6, label="Stress", density=True)
+    plt.axvline(0, color='k', linestyle='--', linewidth=1)
+    plt.title("HRV Stress Score Distribution [-1, +1]")
     plt.xlabel("Stress Score")
     plt.ylabel("Density")
+    plt.legend()
     plt.grid(True)
+    plt.tight_layout()
     plt.show()
+
+    return model, scaler, (alpha, beta)
 
 
 def main():
@@ -138,11 +172,14 @@ def main():
     y = np.concatenate(all_y)
     print(f"Training data shape: {X.shape}, Label distribution: {np.bincount(y)}")
 
-    model = train_model(X, y)
+    model, scaler, (alpha, beta) = train_model(X, y)
 
     os.makedirs("models", exist_ok=True)
     dump(model, "models/hrv_stress_xgb_model.joblib")
-    print("Model saved to models/hrv_stress_xgb_model.joblib")
+    dump(scaler, "models/hrv_stress_scaler.joblib")
+    np.save("models/hrv_score_alpha_beta.npy", [alpha, beta])
+    print("Model and scoring parameters saved.")
+
 
 if __name__ == "__main__":
     main()
