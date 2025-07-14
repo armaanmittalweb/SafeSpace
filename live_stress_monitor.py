@@ -2,29 +2,54 @@ import os
 import time
 import random
 import numpy as np
+import geocoder
 from datetime import datetime
 from joblib import load
 from pynput import keyboard, mouse
-from pathlib import Path
 from dotenv import load_dotenv
-from huggingface_hub import login
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from sklearn.preprocessing import StandardScaler
+import torch
+import platform
 
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
     raise ValueError("Please set HF_TOKEN in a .env file or environment variable.")
-login(token=HF_TOKEN)
 
+def load_model_with_params(name, model_file, alpha_beta_file=None, center=0.5):
+    model = load(f"models/{model_file}")
+    scaler = model[1] if isinstance(model, tuple) else None
+    model = model[0] if isinstance(model, tuple) else model
+
+    alpha, beta, scale = 1.0, 0.0, 1.0
+    if alpha_beta_file and os.path.exists(f"models/{alpha_beta_file}"):
+        params = np.load(f"models/{alpha_beta_file}")
+        if isinstance(params, np.lib.npyio.NpzFile):  # .npz
+            alpha = params["alpha"].item()
+            beta = params["beta"].item()
+            scale = params["scale"].item() if "scale" in params else 1.0
+            center = params["center"].item() if "center" in params else center
+        else:
+            alpha, beta = params
+
+    return {
+        "model": model,
+        "scaler": scaler,
+        "alpha": alpha,
+        "beta": beta,
+        "scale": scale,
+        "center": center
+    }
 
 models = {
-    "hrv": load("models/hrv_stress_xgb_model.joblib"),
-    "gsr": load("models/gsr_stress_model.joblib"),
-    "temp": load("models/temp_stress_model.joblib"),
-    "behavior": load("models/behavior_stress_model.joblib") 
+    "hrv": load_model_with_params("hrv", "hrv_stress_xgb_model.joblib", "hrv_score_alpha_beta.npy"),
+    "gsr": load_model_with_params("gsr", "gsr_stress_model.joblib"),
+    "temp": load_model_with_params("temp", "temp_stress_model.joblib"),
+    "ppg": load_model_with_params("ppg", "ppg_stress_model.joblib"),
+    "spo2": load_model_with_params("spo2", "spo2_stress_model.joblib", "spo2_score_params.npz"),
+    "behavior": load_model_with_params("behavior", "behavior_stress_model.joblib"),
 }
-
 
 keystroke_times = []
 mouse_movements = []
@@ -38,38 +63,38 @@ def on_move(x, y):
 keyboard_listener = keyboard.Listener(on_press=on_press)
 mouse_listener = mouse.Listener(on_move=on_move)
 
-
 def get_simulated_window(length=60):
     return np.random.normal(loc=0.0, scale=1.0, size=(1, length))
 
+def compute_score(x, model_info):
+    x_mean = x.mean(axis=1).reshape(-1, 1)
+    z = StandardScaler().fit_transform(x_mean).flatten()
+    logit = model_info["alpha"] * z + model_info["beta"]
+    centered = logit - model_info["center"]
+    return float(np.tanh(model_info["scale"] * centered)[0])
 
-print("🔁 Loading Mistral-7B-Instruct-v0.1...")
-model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+print("🔁 Loading Gemma-2B-Instruct...")
+model_name = "google/gemma-2b-it"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=HF_TOKEN)
+tokenizer.pad_token = tokenizer.eos_token
 
-model = AutoModelForCausalLM.from_pretrained(
+llm_model = AutoModelForCausalLM.from_pretrained(
     model_name,
     token=HF_TOKEN,
-    device_map="auto",
-    torch_dtype="auto",
-    offload_folder="offload"
+    torch_dtype=torch.float16,
+    device_map="auto"
 )
-
-llm = pipeline("text-generation", model=model, tokenizer=tokenizer)
-print("✅ LLM Ready!")
+print("✅ Gemma 2B Instruct Loaded.")
 
 def predict_stress_scores():
-    hrv_feat = get_simulated_window()
-    gsr_feat = get_simulated_window()
-    temp_feat = get_simulated_window()
-
-    hrv_score = 2 * models["hrv"].predict_proba(hrv_feat)[0][1] - 1
-    gsr_score = 2 * models["gsr"].predict_proba(gsr_feat)[0][1] - 1
-    temp_score = 2 * models["temp"].predict_proba(temp_feat)[0][1] - 1
+    scores = {}
+    for name in ["hrv", "gsr", "temp", "ppg", "spo2"]:
+        x = get_simulated_window()
+        scores[name] = round(compute_score(x, models[name]), 3)
 
     if len(keystroke_times) < 2 or len(mouse_movements) < 2:
-        behavior_score = 0
+        scores["behavior"] = 0.0
     else:
         ikis = np.diff([t.timestamp() for t in keystroke_times[-10:]])
         avg_iki = np.mean(ikis)
@@ -78,45 +103,86 @@ def predict_stress_scores():
         vel = np.mean([random.uniform(0.5, 2.5) for _ in range(10)])
         jerk = np.std([random.uniform(0.1, 1.0) for _ in range(10)])
         feat = np.array([[avg_iki, std_iki, avg_hold, vel, jerk]])
-        scaler = models["behavior"][1]
-        model = models["behavior"][0]
-        assert feat.shape[1] == scaler.n_features_in_, f"Expected {scaler.n_features_in_} features, got {feat.shape[1]}"
-        feat = scaler.transform(feat)
-        behavior_score = 2 * model.predict_proba(feat)[0][1] - 1
+        behavior = models["behavior"]
+        feat = behavior["scaler"].transform(feat)
+        scores["behavior"] = round(compute_score(feat, behavior), 3)
 
-    return {
-        "hrv": round(hrv_score, 3),
-        "gsr": round(gsr_score, 3),
-        "temp": round(temp_score, 3),
-        "behavior": round(behavior_score, 3)
-    }
+    return scores
+
+def get_user_context(behavior_score):
+    now = datetime.now()
+    time_of_day = now.strftime("%I:%M %p")
+    day = now.strftime("%A")
+    location = "unknown"
+    try:
+        g = geocoder.ip("me")
+        if g.ok and g.city:
+            location = f"{g.city}, {g.country}"
+    except Exception:
+        location = platform.node()
+
+    behavior_state = (
+        "highly active" if behavior_score > 0.5 else
+        "neutral" if -0.5 <= behavior_score <= 0.5 else
+        "very idle"
+    )
+    return f"The user is currently in {location}, on a {day} at {time_of_day}." #. Based on their behavior, they appear {behavior_state}."
 
 def generate_feedback(scores):
+    context = get_user_context(scores["behavior"])
+    print(f"{context}")
     prompt = (
-        f"You are an empathetic health assistant. Based on the scores below, describe the user's stress level, assign it to an emotional category "
-        f"(🔵 calm, 🟢 neutral, 🟡 mild stress, 🔴 high stress), and suggest a specific coping strategy.\n\n"
-        f"Stress scores (range: –1 = low stress to +1 = high stress):\n"
+        f"{context}\n\n"
+        "Each score is in the range [-1, +1] where:\n"
+        "negative value = no stress\n"
+        "Closer to 0 = we can ignore it we will not consider these values in our evaluation.\n"
+        "postitve value = high stress\n\n"
+        "Remember these are normalized scores where and not to be considered actual physiological measurements.\n"
+        "Use these rules to interpret scores:\n"
+        "Score < -0.4 → 'no stress'\n"
+        # "-0.4 to 0.4 → 'uncertain'\n"
+        "Score > 0.4 → 'high stress'\n\n"
+        "Output in this exact format:\n"
+        "Summary: <1 sentence summary>\n"
+        "Coping Tip: <1 sentence coping tip>\n\n"
+        f"Scores:\n"
         f"- HRV: {scores['hrv']}\n"
         f"- GSR: {scores['gsr']}\n"
         f"- Temp: {scores['temp']}\n"
+        f"- PPG: {scores['ppg']}\n"
+        f"- SpO₂: {scores['spo2']}\n"
         f"- Behavior: {scores['behavior']}\n\n"
-        "Output exactly 2 sentences: one summarizing the emotional state, one with a coping tip."
+        "Begin:"
     )
-    output = llm(prompt, max_new_tokens=100, do_sample=True, temperature=0.8)[0]["generated_text"]
-    generated = output.strip()
-    return generated.split(prompt)[-1].strip() if prompt in generated else generated
 
+    encoded = tokenizer(prompt, return_tensors="pt", padding=True).to(llm_model.device)
+    with torch.no_grad():
+        output_ids = llm_model.generate(
+            input_ids=encoded["input_ids"],
+            attention_mask=encoded["attention_mask"],
+            max_new_tokens=150,
+            do_sample=True,
+            temperature=0.7,
+            pad_token_id=tokenizer.eos_token_id
+        )
+    full_output = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+    return full_output.split("Begin:")[-1].strip()
 
-def run_monitor(interval=60):
+def run_monitor(interval=15):
     print("▶️ Real-time stress monitoring started.\nPress Ctrl+C to stop.\n")
     keyboard_listener.start()
     mouse_listener.start()
-
     try:
         while True:
+            start = time.time()
             scores = predict_stress_scores()
-            print(f"\n🧪 Stress Scores: {scores}")
+            score_time = time.time() - start
+            start_feedback = time.time()
             feedback = generate_feedback(scores)
+            feedback_time = time.time() - start_feedback
+            total_time = time.time() - start
+            print(f"\n🧪 Stress Scores: {scores}")
+            print(f"⏱️ Time — Scores: {score_time:.2f}s | Feedback: {feedback_time:.2f}s | Total: {total_time:.2f}s")
             print("\n🧠 AI Feedback:\n" + feedback)
             print("—" * 60)
             time.sleep(interval)
@@ -125,6 +191,5 @@ def run_monitor(interval=60):
         keyboard_listener.stop()
         mouse_listener.stop()
 
-
 if __name__ == "__main__":
-    run_monitor(interval=60)
+    run_monitor()
