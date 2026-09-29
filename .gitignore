@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data and intermediate files (WESAD may not be redistributed)
+training/cache/
+training/**/*.npz
+*.pkl
+*.zip

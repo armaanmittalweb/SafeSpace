@@ -1,0 +1,35 @@
+motion: AUC(acc_std -> stress) mean over subjects 0.699, pooled 0.697, r=0.443; by condition {'baseline': {'mean_g': 0.029905200285666244, 'median_g': 0.02719162837032}, 'stress': {'mean_g': 0.06866702600695605, 'median_g': 0.042853539818830576}, 'amusement': {'mean_g': 0.016721058372166475, 'median_g': 0.010953145026589194}}; median acc_std HRV-valid 0.0221 vs invalid 0.0522
+hrv ablation rmssd+sdnn+pnn50   BA 0.559 F1 0.489 AUC 0.673+/-0.176 mean coef sign [-1. -1.  1.]
+hrv ablation rmssd+sdnn         BA 0.616 F1 0.508 AUC 0.638+/-0.288 mean coef sign [-1. -1.]
+hrv ablation rmssd              BA 0.596 F1 0.487 AUC 0.620+/-0.314 mean coef sign [-1.]
+hrv ablation sdnn               BA 0.618 F1 0.508 AUC 0.652+/-0.257 mean coef sign [-1.]
+[baseline] hr    n=2017 LR  BA 0.859+/-0.125 F1 0.848 AUC 0.941+/-0.099 (n=15) | XGB BA 0.866 F1 0.852 AUC 0.931 | signs {'hr_mean': 1.0}
+[baseline] hrv   n=1552 LR  BA 0.616+/-0.206 F1 0.508 AUC 0.638+/-0.288 (n=12) | XGB BA 0.576 F1 0.531 AUC 0.560 | signs {'rmssd': 1.0, 'sdnn': 1.0}
+[baseline] eda   n=2103 LR  BA 0.841+/-0.180 F1 0.824 AUC 0.958+/-0.072 (n=15) | XGB BA 0.840 F1 0.826 AUC 0.937 | signs {'eda_tonic': 1.0, 'eda_slope': 1.0, 'scr_count': 1.0, 'scr_amp': 1.0}
+[baseline] temp  n=2103 LR  BA 0.706+/-0.192 F1 0.664 AUC 0.782+/-0.263 (n=15) | XGB BA 0.706 F1 0.672 AUC 0.767 | signs {'temp_mean': 1.0, 'temp_slope': 1.0}
+[baseline] fused all          mean_logit BA 0.966+/-0.040 F1 0.954+/-0.051 AUC 0.995+/-0.009
+[baseline] fused all          stacked_lr BA 0.917+/-0.127 F1 0.904+/-0.129 AUC 0.976+/-0.058
+[baseline] fused hr+eda+temp  mean_logit BA 0.967+/-0.038 F1 0.956+/-0.048 AUC 0.995+/-0.010
+[baseline] fused hr+eda+temp  stacked_lr BA 0.917+/-0.127 F1 0.904+/-0.129 AUC 0.976+/-0.058
+[baseline] fused hr+eda       mean_logit BA 0.930+/-0.109 F1 0.923+/-0.109 AUC 0.992+/-0.017
+[baseline] fused hr+eda       stacked_lr BA 0.932+/-0.083 F1 0.918+/-0.081 AUC 0.992+/-0.016
+[none] hr    n=2017 LR  BA 0.774+/-0.171 F1 0.745 AUC 0.941+/-0.099 (n=15) | XGB BA 0.790 F1 0.729 AUC 0.902 | signs {'hr_mean': 1.0}
+[none] hrv   n=1552 LR  BA 0.586+/-0.183 F1 0.473 AUC 0.639+/-0.283 (n=12) | XGB BA 0.537 F1 0.458 AUC 0.619 | signs {'rmssd': 1.0, 'sdnn': 1.0}
+[none] eda   n=2103 LR  BA 0.804+/-0.130 F1 0.777 AUC 0.874+/-0.200 (n=15) | XGB BA 0.775 F1 0.752 AUC 0.896 | signs {'eda_tonic': 0.0, 'eda_slope': 0.8666666666666667, 'scr_count': 1.0, 'scr_amp': 1.0}
+[none] temp  n=2103 LR  BA 0.746+/-0.193 F1 0.702 AUC 0.783+/-0.230 (n=15) | XGB BA 0.690 F1 0.647 AUC 0.758 | signs {'temp_mean': 1.0, 'temp_slope': 1.0}
+[none] fused all          mean_logit BA 0.874+/-0.116 F1 0.842+/-0.158 AUC 0.974+/-0.034
+[none] fused all          stacked_lr BA 0.870+/-0.111 F1 0.847+/-0.149 AUC 0.978+/-0.029
+[none] fused hr+eda+temp  mean_logit BA 0.885+/-0.104 F1 0.856+/-0.144 AUC 0.979+/-0.027
+[none] fused hr+eda+temp  stacked_lr BA 0.870+/-0.112 F1 0.846+/-0.151 AUC 0.977+/-0.029
+[none] fused hr+eda       mean_logit BA 0.876+/-0.127 F1 0.850+/-0.176 AUC 0.971+/-0.038
+[none] fused hr+eda       stacked_lr BA 0.875+/-0.130 F1 0.849+/-0.178 AUC 0.968+/-0.048
+[rest5] hr    n=1769 LR  BA 0.812+/-0.160 F1 0.792 AUC 0.939+/-0.106 (n=15) | XGB BA 0.825 F1 0.804 AUC 0.910 | signs {'hr_mean': 1.0}
+[rest5] hrv   n=1327 LR  BA 0.556+/-0.179 F1 0.498 AUC 0.633+/-0.289 (n=12) | XGB BA 0.580 F1 0.529 AUC 0.604 | signs {'rmssd': 1.0, 'sdnn': 1.0}
+[rest5] eda   n=1848 LR  BA 0.839+/-0.187 F1 0.813 AUC 0.959+/-0.084 (n=15) | XGB BA 0.772 F1 0.739 AUC 0.911 | signs {'eda_tonic': 1.0, 'eda_slope': 1.0, 'scr_count': 1.0, 'scr_amp': 1.0}
+[rest5] temp  n=1848 LR  BA 0.650+/-0.202 F1 0.597 AUC 0.765+/-0.266 (n=15) | XGB BA 0.654 F1 0.619 AUC 0.693 | signs {'temp_mean': 1.0, 'temp_slope': 1.0}
+[rest5] fused all          mean_logit BA 0.916+/-0.113 F1 0.904+/-0.116 AUC 0.998+/-0.006
+[rest5] fused all          stacked_lr BA 0.878+/-0.164 F1 0.865+/-0.168 AUC 0.974+/-0.076
+[rest5] fused hr+eda+temp  mean_logit BA 0.915+/-0.119 F1 0.904+/-0.122 AUC 0.998+/-0.007
+[rest5] fused hr+eda+temp  stacked_lr BA 0.872+/-0.164 F1 0.858+/-0.169 AUC 0.975+/-0.078
+[rest5] fused hr+eda       mean_logit BA 0.897+/-0.138 F1 0.882+/-0.158 AUC 0.994+/-0.011
+[rest5] fused hr+eda       stacked_lr BA 0.895+/-0.134 F1 0.876+/-0.157 AUC 0.993+/-0.016
