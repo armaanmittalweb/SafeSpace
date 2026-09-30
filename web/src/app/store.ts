@@ -4,7 +4,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { LiveConnection, LiveInput } from '../contract/inputs';
 import { DEFAULT_SETTINGS, type Baseline, type CheckIn, type Me, type StressSession, type UserSettings } from '../contract/records';
 import type { SyncStatus } from '../contract/vault';
-import { vault } from './vault';
+import { SETTINGS_RECORD_ID, vault } from './vault';
 
 export type Auth =
   | { state: 'loading' }
@@ -117,7 +117,7 @@ export async function signOut() {
 export async function saveSettings(p: Partial<UserSettings>) {
   const next = { ...getState().settings, ...p };
   setState({ settings: next });
-  await vault.put('settings', 'settings', next);
+  await vault.put('settings', SETTINGS_RECORD_ID, next);
 }
 
 export async function connectDevice(input: LiveInput) {

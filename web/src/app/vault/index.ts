@@ -1,12 +1,18 @@
-// The app's Vault. Until the vault agent's web/src/vault lands in this branch, this is the local stub
-// (src/stubs/vault.ts); swap in an adapter over web/src/vault here. `?offline=1` (dev and shots builds)
-// pretends the network is down, to show the offline states.
+// The app's Vault: the real end-to-end encrypted vault (web/src/vault via ./real), or, in dev with
+// `?fake=…` and in the screenshot build, a local stand-in that needs no server (src/stubs/vault.ts).
+// `?offline=1` (fake mode only) pretends the network is down, to show the offline states.
 import type { Vault } from '../../contract/vault';
+import { SETTINGS_ID } from '../../vault';
 import { createStubVault } from '../../stubs/vault';
+import { FAKE } from '../ports';
+import { createRealVault } from './real';
 
-const devFlag = (k: string) => {
-  if (!(import.meta.env.DEV || import.meta.env.VITE_FAKE)) return false;
-  try { return new URLSearchParams(location.search).get(k) === '1'; } catch { return false; }
-};
+const flag = (k: string) => { try { return new URLSearchParams(location.search).get(k) === '1'; } catch { return false; } };
 
-export const vault: Vault = createStubVault({ forceOffline: devFlag('offline'), latencyMs: import.meta.env.VITE_FAKE ? 60 : 250 });
+export const USING_STUB = !!FAKE;
+export const vault: Vault = USING_STUB
+  ? createStubVault({ forceOffline: flag('offline'), latencyMs: import.meta.env.VITE_FAKE ? 60 : 250 })
+  : createRealVault();
+
+/** The fixed id of the one settings record. */
+export const SETTINGS_RECORD_ID = SETTINGS_ID;

@@ -9,7 +9,7 @@ Plan this implements: the "SafeSpace" and "SafeSpace · devices and activities" 
 ## Hosts
 
 - App: `https://safespace.amittal.dev` (Vercel, `web/`). API: `https://safespace-api.amittal.dev` (new Worker in `api/`, D1 database `safespace`). Local: app `http://localhost:5175`, API `http://localhost:8789`.
-- Session: HttpOnly cookie on the API host, `ss_session`, `Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000`. Stored as SHA-256 in D1. `credentials: 'include'`. CORS: exact origins `https://safespace.amittal.dev`, `http://localhost:5175`, with credentials. State-changing requests need `Content-Type: application/json` and an allowed Origin (CSRF).
+- Session: HttpOnly cookie on the API host, `ss_session`, `Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000` (`Secure` dropped on plain-http local dev; the expiry and Max-Age slide forward on use, at most hourly). Stored as SHA-256 in D1. `credentials: 'include'`. CORS: exact origins `https://safespace.amittal.dev`, `http://localhost:5175`, with credentials. State-changing requests need `Content-Type: application/json` and an allowed Origin (CSRF).
 - Errors: `{ error: string, code: 'bad_request'|'unauthenticated'|'forbidden'|'not_found'|'conflict'|'rate_limited'|'too_large'|'unavailable'|'server' }`.
 
 ## Keys (all in the browser, WebCrypto only)
@@ -17,20 +17,20 @@ Plan this implements: the "SafeSpace" and "SafeSpace · devices and activities" 
 ```
 salt        = 16 random bytes, stored on the server, returned by /api/auth/params
 master      = PBKDF2-SHA256(password, salt, 310_000 iterations, 256 bits)
-authKey     = HKDF-SHA256(master, info "safespace auth")      → sent to the server as base64url
-wrapKey     = HKDF-SHA256(master, info "safespace wrap")      → AES-GCM key, never leaves the device
+authKey     = HKDF-SHA256(master, salt = empty, info "safespace auth")  → sent to the server as base64url (32 bytes)
+wrapKey     = HKDF-SHA256(master, salt = empty, info "safespace wrap")  → AES-GCM key, never leaves the device
 dataKey     = random AES-GCM 256 key, created at sign-up
 wrappedByPassword = AES-GCM(wrapKey, raw dataKey)             → stored on the server
 recoveryKey = 20 random bytes shown once as 8 groups of 4 Crockford base32 chars (e.g. 7K2M-…)
-recoveryAuth, recoveryWrap = HKDF(recoveryKey, "safespace recovery auth" / "safespace recovery wrap")
+recoveryAuth, recoveryWrap = HKDF(recoveryKey's 20 bytes, salt = empty, "safespace recovery auth" / "safespace recovery wrap")
 wrappedByRecovery = AES-GCM(recoveryWrap, raw dataKey)        → stored on the server
 ```
 
-The server stores `PBKDF2(authKey, own salt, 100k)` and `PBKDF2(recoveryAuth, …)`, never `authKey` or `recoveryAuth` themselves. It never sees the password, `wrapKey`, `dataKey` or plaintext records. For an unknown email, `/api/auth/params` returns a salt derived as HMAC(`PARAMS_SECRET`, email) so emails cannot be enumerated.
+The server stores `PBKDF2(authKey, own salt, 20k)` and `PBKDF2(recoveryAuth, …)`, never `authKey` or `recoveryAuth` themselves (20k, not 100k: the inputs are 256-bit keys, and two 100k hashes overrun the Workers free-plan CPU budget; the count is stored per hash). It never sees the password, `wrapKey`, `dataKey` or plaintext records. For an unknown email, `/api/auth/params` returns a salt derived as HMAC(`PARAMS_SECRET`, email) so emails cannot be enumerated, and `/recover/start` returns a blob derived the same way (stable across calls and the same size as a real one; a fresh random blob per call would give unknown emails away).
 
 On the device the unwrapped `dataKey` is kept as a non-extractable CryptoKey in IndexedDB for the life of the session (so a reload does not ask for the password again). Sign-out deletes it.
 
-Record encryption: `iv` = 12 random bytes, `ct` = AES-GCM(dataKey, iv, JSON bytes, additionalData = `${id}|${kind}`). Both base64url on the wire.
+Record encryption: `iv` = 12 random bytes, `ct` = AES-GCM(dataKey, iv, JSON bytes, additionalData = `${id}|${kind}`). Both base64url on the wire. The JSON is an envelope `{ updatedAt: number, data: <the plaintext shape> }`: `updatedAt` is the editing device's clock and settles sync conflicts (last writer wins; `web/src/vault/sync.ts`).
 
 ## Vault API (`api/`, Hono on Workers + D1)
 
@@ -43,15 +43,15 @@ Record encryption: `iv` = 12 random bytes, `ct` = AES-GCM(dataKey, iv, JSON byte
 | GET /api/auth/me | → `Me & {wrappedByPassword}` or 401 |
 | POST /api/auth/recover/start | `{email}` → `{wrappedByRecovery}` (always 200; a random blob for unknown emails) |
 | POST /api/auth/recover | `{email, recoveryAuth, salt, authKey, wrappedByPassword}` → `Me`, sets cookie, revokes other sessions |
-| POST /api/auth/password | `{authKey (current), salt, newAuthKey, wrappedByPassword}` → 204, revokes other sessions |
-| POST /api/auth/recovery | `{authKey (current), recoveryAuth, wrappedByRecovery:{iv,ct}}` → 204. Replaces the recovery key (Settings, "regenerate"); the old key stops working. *(Amendment, app agent.)* |
-| GET /api/auth/sessions, DELETE /api/auth/sessions/:id | as in EduSched: `SessionInfo { id, current, userAgent, createdAt, lastSeenAt }[]` |
-| GET /api/records?since=<cursor> | → `{records: SealedRecord[], cursor}` (includes tombstones since the cursor) |
-| PUT /api/records/:id | `{kind, iv, ct, baseVersion}` → `{version}`. 409 `conflict` with the current record if `baseVersion` is stale |
-| DELETE /api/records/:id | → 204 (leaves a tombstone for other devices) |
-| GET /api/export | → every SealedRecord plus the wrapped keys, as one JSON download |
-| DELETE /api/account | `{authKey}` → 204, deletes everything |
-| POST /api/narrate | `{facts: NarrationFacts}` → `{text, model}` or 503 `unavailable`. Only numbers, labels and the user's tag are sent. Tries OpenRouter, then Groq, then Gemini free models (keys are optional secrets; none set → 503). 10 per hour per user |
+| POST /api/auth/password | `{authKey (current), salt, newAuthKey, wrappedByPassword}` → 204, revokes other sessions. 403 `forbidden` if authKey is wrong |
+| POST /api/auth/recovery-key | `{authKey (current), recoveryAuth, wrappedByRecovery}` → 204 (Settings → regenerate recovery key). 403 if authKey is wrong |
+| GET /api/auth/sessions, DELETE /api/auth/sessions/:id | → `SessionInfo[]` (current one flagged; id = SHA-256 hex of the token), → 204 or 404 |
+| GET /api/records?since=<cursor> | → `{records: SealedRecord[], cursor: string, more: boolean, reset?: true}`: 500 per page (`more` → call again with `cursor`); tombstones included after a cursor, left out of a first pull. `reset` = the cursor predates pruned tombstones, so this is a full listing and local records not in it are gone |
+| PUT /api/records/:id | `{kind, iv, ct, baseVersion}` → `{version}`. `baseVersion` 0 creates. 409 `{error, code: 'conflict', current: SealedRecord \| null}` if `baseVersion` is stale (`null`: not on the server, write again with 0). A tombstone can be written over at its version |
+| DELETE /api/records/:id[?baseVersion=n] | → 204 (leaves a tombstone: `iv`, `ct` empty; idempotent). With `baseVersion`, 409 as above if the record changed since |
+| GET /api/export | → `{format: 'safespace-vault-export', version: 1, exportedAt, user, salt, iterations, wrappedByPassword, wrappedByRecovery, records}` (live records), as a download |
+| DELETE /api/account | `{authKey}` → 204, deletes everything. 403 if authKey is wrong |
+| POST /api/narrate | `{facts: NarrationFacts}` → `{text, model: '<provider>:<model>'}` or 503 `unavailable`. Only numbers, labels and the user's tag are sent. Tries OpenRouter, then Groq, then Gemini free models (keys are optional secrets; none set → 503). 10 per hour per user |
 | GET /api/test | health, no D1 |
 | GET /internal/stats, POST /internal/prune | `x-internal-key` = `INTERNAL_KEY`, else 404. Stats: users, records, dbBytes, sessions |
 
@@ -59,9 +59,11 @@ Record encryption: `iv` = 12 random bytes, `ct` = AES-GCM(dataKey, iv, JSON byte
 interface Me { user: { id: string; email: string; createdAt: string } }
 interface SealedRecord { id: string; kind: RecordKind; iv: string; ct: string; version: number; updatedAt: string; deleted: boolean }
 type RecordKind = 'checkin' | 'session' | 'baseline' | 'personal-model' | 'import' | 'settings'
+interface SessionInfo { id: string; current: boolean; userAgent: string | null; createdAt: string; lastSeenAt: string }
+// The client side of all this is web/src/vault (account.ts flows, client.ts, sync.ts, crypto.ts); its wire types are in web/src/vault/types.ts.
 ```
 
-Limits: 64 KB per record, 5 MB and 5,000 records per user, 5 logins/min per IP, 20 signups per hour per IP. D1 free: 5 GB and 100k writes/day, far more than needed. `id` is a client-made UUID; `updatedAt` is the server's; any meaningful timestamp lives inside the ciphertext.
+Limits: 64 KB per record (length of `iv` + `ct` as sent → 413 `too_large`), 5 MB and 5,000 live records per user (→ 507 `too_large` with `limit: 'bytes' | 'records'`), 5 logins/min per IP (the same limiter covers recover/start, recover, password, recovery-key and account deletion), 20 signups per hour per IP (a D1 counter: the Workers limiter only knows 10 s and 60 s), 300 API requests/min per IP. Tombstones are pruned after 90 days by a daily cron. D1 free: 5 GB and 100k writes/day, far more than needed. `id` is a client-made lowercase UUID (the one `settings` record uses the fixed id `00000000-0000-4000-8000-000000000001`, exported as `SETTINGS_ID`); `updatedAt` is the server's; any meaningful timestamp lives inside the ciphertext.
 
 Without an account a person can do one check-in (and any activity); nothing is sent to the server. After sign-up the app offers to save that check-in.
 
@@ -163,9 +165,9 @@ Camera frames, raw ECG, raw imported files, key events. Imports keep only per-wi
 
 The TypeScript for all of these is in `web/src/contract/`.
 
-- **Vault client** (`contract/vault.ts`): `web/src/vault/index.ts` exports `vault: Vault` with `restore, signUp → {me, recoveryKey}, signIn, signOut, recover, changePassword, regenerateRecoveryKey, sessions, revokeSession, put(kind, id, value), remove(id), list(kind), onChange, sync, status, onStatus, exportSealed, deleteAccount, narrate`. Writes are local first (offline queue) and synced in the background; failures throw a `VaultError` with the API `code` (or `offline` / `crypto`).
-- **New endpoint** `POST /api/auth/recovery` for regenerating the recovery key (table above).
-- **Settings record**: kind `settings`, id `settings`, value `UserSettings { keepRawBeats: false, aiNotes: false }`. The theme stays per device (localStorage `ss-theme`).
+- **App vault facade** (`contract/vault.ts`): screens call one `Vault` interface (`restore → {me, locked}`, `unlock`, `signUp → {me, recoveryKey}`, `signIn`, `signOut`, `recover`, `changePassword`, `regenerateRecoveryKey`, `sessions`, `revokeSession`, `put(kind, id, value)`, `remove`, `list(kind)`, `onChange`, `sync`, `status`/`onStatus`, `exportSealed`, `deleteAccount`, `narrate`). `web/src/app/vault/real.ts` implements it over the vault module (account.ts, `createVaultStore`, the client); `?fake=…` dev and screenshot builds use a local stand-in (`web/src/stubs/vault.ts`). Wire types (`RecordKind`, `Me`, `SealedRecord`, `SessionInfo`, `ErrorCode`) are defined once in `web/src/vault/types.ts` and re-exported by `contract/records.ts`.
+- **New endpoint** `POST /api/auth/recovery-key` for regenerating the recovery key (table above).
+- **Settings record**: kind `settings`, id `SETTINGS_ID` from `web/src/vault/sync.ts`, value `UserSettings { keepRawBeats: false, aiNotes: false }`. The theme stays per device (localStorage `ss-theme`).
 - **Baseline readiness**: `calibration.n` counts readings on distinct local days (or 60-s rest windows from a stress session). A baseline is ready when `n >= 3`. The app keeps one Baseline record per user and adds one reading per day to it; a new baseline replaces it.
 - **Inputs**: `LiveInput` and `FileInput` carry `kind: 'live' | 'file'`; `web/src/inputs/registry.ts` exports `INPUTS: (LiveInput | FileInput)[]` (the camera, from `./camera`, is one of them). `LiveConnection` gains optional `onSample` (waveform for the live trace), `battery()` and `onDisconnect`. `connect()` rejects with DOMException names (`NotAllowedError` for a denied permission, `NotFoundError` when no device or camera exists or the chooser was cancelled, `NotSupportedError`).
 - **HRV** (`contract/signal.ts`): `web/src/signal/hrv.ts` exports `cleanRR(rr) → {rr, dropped}` and `hrvFeatures(rr) → HrvFeatures | null` (`{hr_mean, rmssd, sdnn, n, dropped}`, null under `MIN_BEATS = 10` clean intervals).
