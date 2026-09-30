@@ -129,7 +129,17 @@ export function RunFrame(p: {
   meta: Meta; left: number | null; total: number; status?: ComponentChildren; onStop: () => void; embedded?: boolean; stopLabel?: string; children: ComponentChildren;
 }) {
   const frac = p.left == null ? 0 : 1 - p.left / p.total;
-  if (p.embedded) return <div class="ax ax-embedded">{p.children}</div>;
+  if (p.embedded) {
+    return (
+      <div class="ax ax-embedded">
+        <div class="ax-embed-bar">
+          <span class="ax-small" aria-live="polite">{p.status}</span>
+          {p.left != null && <span class="ax-mono ax-embed-clock" role="timer">{fmtClock(p.left)}</span>}
+        </div>
+        {p.children}
+      </div>
+    );
+  }
   return (
     <section class="ax ax-sheet" aria-label={p.meta.name}>
       <div class="ax-head">

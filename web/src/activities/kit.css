@@ -97,3 +97,8 @@
 .ax-q.good { color: var(--ax-good); } .ax-q.fair { color: var(--ax-fair); } .ax-q.poor { color: var(--ax-poor); }
 
 @media (prefers-reduced-motion: reduce) { .ax *, .ax *::before, .ax *::after { transition: none !important; animation: none !important; } }
+
+/* inside a host (the stress session): no sheet, a slim status bar */
+.ax-embedded { display: flex; flex-direction: column; gap: 14px; }
+.ax-embed-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 20px; }
+.ax-embed-clock { font-size: 14px; color: var(--muted); }
