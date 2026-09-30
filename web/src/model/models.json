@@ -1,0 +1,381 @@
+{
+ "_generated_by": "training/export_web.py from models_v2/model_card.json (coefficients checked against the ONNX files) and summary constants from training/cache/features.csv",
+ "name": "SafeSpace per-signal stress models v2",
+ "dataset": {
+  "name": "WESAD, wrist (Empatica E4) signals only",
+  "citation": "Schmidt, P., Reiss, A., Duerichen, R., Marberger, C., Van Laerhoven, K. \"Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection\", ICMI 2018.",
+  "terms": "Scientific, non-commercial purposes, with credit.",
+  "n_subjects": 15
+ },
+ "window_s": 60.0,
+ "stride_s": 15.0,
+ "calibration": {
+  "method": "rest5",
+  "rest_seconds": 300,
+  "description": "per-subject z-score z = (x - rest_mean) / max(rest_sd, floor). rest_mean/rest_sd come from the windows lying entirely in the first 5 min of the subject's resting (WESAD baseline) segment; those windows are excluded from training and scoring. The browser demo does the same with a resting segment recorded first.",
+  "sd_floor": {
+   "hr_mean": 1.0,
+   "rmssd": 3.0,
+   "sdnn": 3.0,
+   "eda_tonic": 0.05,
+   "eda_slope": 0.02,
+   "scr_count": 0.5,
+   "scr_amp": 0.01,
+   "temp_mean": 0.05,
+   "temp_slope": 0.02,
+   "pnn50": 2.0,
+   "acc_std": 0.005
+  }
+ },
+ "score_mapping": "score = 2p - 1 in [-1, +1], p = probabilities[:, 1]. No other calibration.",
+ "fusion": {
+  "method": "p = sigmoid(mean of logit(p_s) over the signals valid in the window); score = 2p - 1",
+  "loso_rest5": {
+   "balanced_accuracy": {
+    "mean": 0.9122,
+    "sd": 0.1189,
+    "n_subjects": 15
+   },
+   "roc_auc": {
+    "mean": 0.9973,
+    "sd": 0.0067,
+    "n_subjects": 15
+   },
+   "macro_f1": {
+    "mean": 0.9,
+    "sd": 0.1228,
+    "n_subjects": 15
+   }
+  },
+  "by_condition_rest5": {
+   "baseline": {
+    "n": 886,
+    "mean_score": -0.3595016911090025,
+    "frac_flagged": 0.022573363431151242
+   },
+   "stress": {
+    "n": 628,
+    "mean_score": 0.57255945265934,
+    "frac_flagged": 0.8980891719745223
+   },
+   "amusement": {
+    "n": 334,
+    "mean_score": -0.2463345021886567,
+    "frac_flagged": 0.19760479041916168
+   }
+  },
+  "loso_none": {
+   "balanced_accuracy": {
+    "mean": 0.8743,
+    "sd": 0.1161,
+    "n_subjects": 15
+   },
+   "roc_auc": {
+    "mean": 0.9737,
+    "sd": 0.0343,
+    "n_subjects": 15
+   },
+   "macro_f1": {
+    "mean": 0.8424,
+    "sd": 0.1579,
+    "n_subjects": 15
+   }
+  }
+ },
+ "motion": {
+  "flag_rule_z": 3.0,
+  "auc_motion_alone": 0.699,
+  "hrv_valid_frac": {
+   "baseline": 0.915863277826468,
+   "stress": 0.3503184713375796,
+   "amusement": 0.8592814371257484
+  },
+  "hr_valid_frac": {
+   "baseline": 0.9842243645924628,
+   "stress": 0.8964968152866242,
+   "amusement": 0.9910179640718563
+  }
+ },
+ "hr_check_vs_ecg": {
+  "hr_mae_bpm": 2.443,
+  "hr_corr": 0.96,
+  "rmssd_corr": 0.777
+ },
+ "typical": {
+  "_how": "rest: median across the 15 subjects of each subject's rest5 mean and SD (first 5 min of the WESAD baseline). shift: median across subjects of (median value in the condition - rest5 mean). Computed by training/export_web.py from the local feature cache; no per-window data is included.",
+  "rest": {
+   "hr_mean": {
+    "mean": 71.025,
+    "sd": 2.5255,
+    "n_subjects": 15
+   },
+   "rmssd": {
+    "mean": 60.866,
+    "sd": 11.862,
+    "n_subjects": 15
+   },
+   "sdnn": {
+    "mean": 83.563,
+    "sd": 13.239,
+    "n_subjects": 15
+   },
+   "eda_tonic": {
+    "mean": 0.7169,
+    "sd": 0.1091,
+    "n_subjects": 15
+   },
+   "eda_slope": {
+    "mean": -0.093867,
+    "sd": 0.06406,
+    "n_subjects": 15
+   },
+   "scr_count": {
+    "mean": 2.2353,
+    "sd": 1.8068,
+    "n_subjects": 15
+   },
+   "scr_amp": {
+    "mean": 0.036964,
+    "sd": 0.030477,
+    "n_subjects": 15
+   },
+   "temp_mean": {
+    "mean": 33.343,
+    "sd": 0.042177,
+    "n_subjects": 15
+   },
+   "temp_slope": {
+    "mean": 0.015077,
+    "sd": 0.053211,
+    "n_subjects": 15
+   },
+   "acc_std": {
+    "mean": 0.026976,
+    "sd": 0.015649,
+    "n_subjects": 15
+   }
+  },
+  "shift": {
+   "stress": {
+    "hr_mean": 21.663,
+    "rmssd": -3.1793,
+    "sdnn": -2.2582,
+    "eda_tonic": 1.1076,
+    "eda_slope": 0.10838,
+    "scr_count": 6.4706,
+    "scr_amp": 0.045515,
+    "temp_mean": -0.41047,
+    "temp_slope": -0.09265,
+    "acc_std": 0.03325
+   },
+   "amusement": {
+    "hr_mean": 0.47134,
+    "rmssd": -4.2674,
+    "sdnn": -8.0421,
+    "eda_tonic": 0.0063337,
+    "eda_slope": 0.026736,
+    "scr_count": -1.0294,
+    "scr_amp": -0.016209,
+    "temp_mean": -0.11226,
+    "temp_slope": -0.057893,
+    "acc_std": -0.014729
+   }
+  }
+ },
+ "limitations": [
+  "15 WESAD subjects (12 male, 3 female, aged 24-35), one lab session each.",
+  "Stress is lab-induced (Trier Social Stress Test: public speech + mental arithmetic); it says nothing about everyday or chronic stress.",
+  "Non-stress = baseline (seated reading) and amusement (funny clips) only.",
+  "One wrist device (Empatica E4). Other sensors differ in noise, rate and units.",
+  "Needs a per-person 'calibrate at rest' segment; without it performance drops (loso.none).",
+  "Motion is a confound: wrist movement alone separates stress from non-stress with AUC ~0.70, and it is what degrades PPG quality during the TSST. It is reported and used as an artifact flag only, never as a stress input.",
+  "The WESAD protocol always starts with the baseline and for some subjects the stress test ran in a colder room (readme notes for S8, S16), so slow drifts can be confounded with condition.",
+  "Not a medical device."
+ ],
+ "signals": {
+  "hr": {
+   "strength": "primary",
+   "weak_reason": null,
+   "features": [
+    {
+     "name": "hr_mean",
+     "unit": "bpm",
+     "sd_floor": 1.0,
+     "coef": 0.4196936956301051
+    }
+   ],
+   "intercept": -1.3159280622486673,
+   "C": 0.003,
+   "loso_rest5": {
+    "balanced_accuracy": {
+     "mean": 0.8125,
+     "sd": 0.1599,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.9393,
+     "sd": 0.1058,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.7922,
+     "sd": 0.176,
+     "n_subjects": 15
+    }
+   },
+   "subjects_below_chance": [],
+   "limitations": [
+    "Wrist-PPG HR is corrupted by movement; windows with < 40% clean beats are dropped (HR available in 90% of stress vs 98% of baseline windows).",
+    "HR also rises with talking, standing and activity, all part of the TSST."
+   ]
+  },
+  "hrv": {
+   "strength": "weak",
+   "weak_reason": "Wrist PPG loses beats under motion, so HRV is missing or noisy when it matters.",
+   "features": [
+    {
+     "name": "rmssd",
+     "unit": "ms",
+     "sd_floor": 3.0,
+     "coef": -0.05842185632280847
+    },
+    {
+     "name": "sdnn",
+     "unit": "ms",
+     "sd_floor": 3.0,
+     "coef": -0.07182363412459139
+    }
+   ],
+   "intercept": -0.11782534738686282,
+   "C": 0.0003,
+   "loso_rest5": {
+    "balanced_accuracy": {
+     "mean": 0.5607,
+     "sd": 0.1822,
+     "n_subjects": 12
+    },
+    "roc_auc": {
+     "mean": 0.6351,
+     "sd": 0.2872,
+     "n_subjects": 12
+    },
+    "macro_f1": {
+     "mean": 0.5033,
+     "sd": 0.1318,
+     "n_subjects": 15
+    }
+   },
+   "subjects_below_chance": [
+    "S10",
+    "S13",
+    "S15",
+    "S6",
+    "S9"
+   ],
+   "limitations": [
+    "WEAK SIGNAL. Wrist-PPG RMSSD/SDNN are noisy (vs chest ECG: RMSSD r=0.78, biased ~+20 ms).",
+    "Only 35% of stress windows (vs 92% of baseline) have enough clean beats, so the pen is usually absent during stress and was trained on the cleanest stress windows; 3 subjects have no valid stress windows at all.",
+    "Adds nothing measurable to the fused score (fused with vs without HRV within 0.003).",
+    "pNN50 is reported but not modelled: its coefficient came out positive (backwards) alongside RMSSD and SDNN."
+   ]
+  },
+  "eda": {
+   "strength": "primary",
+   "weak_reason": null,
+   "features": [
+    {
+     "name": "eda_tonic",
+     "unit": "µS",
+     "sd_floor": 0.05,
+     "coef": 0.17312547319722596
+    },
+    {
+     "name": "eda_slope",
+     "unit": "µS/min",
+     "sd_floor": 0.02,
+     "coef": 0.16961898880443452
+    },
+    {
+     "name": "scr_count",
+     "unit": "peaks/min",
+     "sd_floor": 0.5,
+     "coef": 0.29795051255554483
+    },
+    {
+     "name": "scr_amp",
+     "unit": "µS",
+     "sd_floor": 0.01,
+     "coef": 0.14501865612472625
+    }
+   ],
+   "intercept": -1.123548295367242,
+   "C": 0.003,
+   "loso_rest5": {
+    "balanced_accuracy": {
+     "mean": 0.8391,
+     "sd": 0.1873,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.9586,
+     "sd": 0.0845,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.8131,
+     "sd": 0.2178,
+     "n_subjects": 15
+    }
+   },
+   "subjects_below_chance": [],
+   "limitations": [
+    "EDA level depends on skin contact, sweat, room temperature and time since the device was put on; calibration removes the person's offset, not drifts.",
+    "Fixed SCR threshold (0.02 uS); very dry skin may show no SCRs."
+   ]
+  },
+  "temp": {
+   "strength": "weak",
+   "weak_reason": "Slow, and tracks the room and clothing as much as stress.",
+   "features": [
+    {
+     "name": "temp_mean",
+     "unit": "°C",
+     "sd_floor": 0.05,
+     "coef": -0.030019551226534127
+    },
+    {
+     "name": "temp_slope",
+     "unit": "°C/min",
+     "sd_floor": 0.02,
+     "coef": -0.18930930603332446
+    }
+   ],
+   "intercept": -0.28045152504069293,
+   "C": 0.001,
+   "loso_rest5": {
+    "balanced_accuracy": {
+     "mean": 0.6499,
+     "sd": 0.2016,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.7653,
+     "sd": 0.266,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.5971,
+     "sd": 0.2275,
+     "n_subjects": 15
+    }
+   },
+   "subjects_below_chance": [
+    "S14",
+    "S16"
+   ],
+   "limitations": [
+    "WEAK SIGNAL. Slow, and driven by room temperature, clothing and time since the device was put on; it flags many amusement windows as stress and is backwards for some subjects (see subjects_below_chance). It tracks 'not at rest / different room' as much as stress."
+   ]
+  }
+ }
+}
