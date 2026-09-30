@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 import features as F
 
-C_GRID = [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+C_GRID = [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
 REST_SECONDS = 300.0  # length of the "calibrate at rest" segment in the rest5 mode
 EXTRA = ["acc_std"]
 CAL_FEATURES = F.ALL_FEATURES + EXTRA
