@@ -57,12 +57,21 @@ describe('personal model', () => {
     expect(scoreWith(m, { meanErrorPct: 4 })).toBeNaN();
   });
 
-  it('is not ready when rest and challenge look the same', () => {
-    const sessions = Array.from({ length: 5 }, (_, i) => session(100 + i, 0));
-    const m = train('follow-dot', sessions)!;
-    expect(m.heldOut.n).toBe(20);
-    expect(m.heldOut.balancedAccuracy).toBeLessThan(0.7);
-    expect(m.ready).toBe(false);
+  it('is usually not ready when rest and challenge look the same (null data)', () => {
+    // Pure noise: held-out balanced accuracy should centre on 0.5. With 20 runs the contract's
+    // rule (>= 0.7 on >= 6) still passes by chance about 1 time in 10, which is documented.
+    const bas: number[] = [];
+    let ready = 0;
+    for (let k = 0; k < 40; k++) {
+      const m = train('follow-dot', Array.from({ length: 5 }, (_, i) => session(100 + 10 * k + i, 0)))!;
+      expect(m.heldOut.n).toBe(20);
+      bas.push(m.heldOut.balancedAccuracy);
+      if (m.ready) ready++;
+    }
+    const mean = bas.reduce((a, b) => a + b) / bas.length;
+    expect(mean).toBeGreaterThan(0.4);
+    expect(mean).toBeLessThan(0.6);
+    expect(ready / 40).toBeLessThan(0.2);
   });
 
   it('is not ready on too few held-out runs even when accurate', () => {
