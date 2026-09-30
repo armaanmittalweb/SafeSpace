@@ -51,8 +51,7 @@ export interface VaultClient {
   narrate(facts: NarrationFacts): Promise<{ text: string; model: string }>;
 }
 
-const env = (import.meta as { env?: Record<string, string | undefined> }).env;
-export const VAULT_URL = (env?.VITE_VAULT_URL || 'https://safespace-api.amittal.dev').replace(/\/$/, '');
+export const VAULT_URL = ((import.meta.env.VITE_VAULT_URL as string | undefined) || 'https://safespace-api.amittal.dev').replace(/\/$/, '');
 
 export function createVaultClient(opts: { baseUrl?: string; fetch?: typeof fetch } = {}): VaultClient {
   const base = (opts.baseUrl ?? VAULT_URL).replace(/\/$/, '');
