@@ -44,7 +44,8 @@ Record encryption: `iv` = 12 random bytes, `ct` = AES-GCM(dataKey, iv, JSON byte
 | POST /api/auth/recover/start | `{email}` → `{wrappedByRecovery}` (always 200; a random blob for unknown emails) |
 | POST /api/auth/recover | `{email, recoveryAuth, salt, authKey, wrappedByPassword}` → `Me`, sets cookie, revokes other sessions |
 | POST /api/auth/password | `{authKey (current), salt, newAuthKey, wrappedByPassword}` → 204, revokes other sessions |
-| GET /api/auth/sessions, DELETE /api/auth/sessions/:id | as in EduSched |
+| POST /api/auth/recovery | `{authKey (current), recoveryAuth, wrappedByRecovery:{iv,ct}}` → 204. Replaces the recovery key (Settings, "regenerate"); the old key stops working. *(Amendment, app agent.)* |
+| GET /api/auth/sessions, DELETE /api/auth/sessions/:id | as in EduSched: `SessionInfo { id, current, userAgent, createdAt, lastSeenAt }[]` |
 | GET /api/records?since=<cursor> | → `{records: SealedRecord[], cursor}` (includes tombstones since the cursor) |
 | PUT /api/records/:id | `{kind, iv, ct, baseVersion}` → `{version}`. 409 `conflict` with the current record if `baseVersion` is stale |
 | DELETE /api/records/:id | → 204 (leaves a tombstone for other devices) |
@@ -157,3 +158,16 @@ Activities export `ActivityDef { id, name, job: 'baseline'|'check-in'|'challenge
 ## Data that never leaves the device
 
 Camera frames, raw ECG, raw imported files, key events. Imports keep only per-window `Measurement`s. Beats are kept only if the user turns it on.
+
+## Amendments (app agent, 30 Sep 2026)
+
+The TypeScript for all of these is in `web/src/contract/`.
+
+- **Vault client** (`contract/vault.ts`): `web/src/vault/index.ts` exports `vault: Vault` with `restore, signUp → {me, recoveryKey}, signIn, signOut, recover, changePassword, regenerateRecoveryKey, sessions, revokeSession, put(kind, id, value), remove(id), list(kind), onChange, sync, status, onStatus, exportSealed, deleteAccount, narrate`. Writes are local first (offline queue) and synced in the background; failures throw a `VaultError` with the API `code` (or `offline` / `crypto`).
+- **New endpoint** `POST /api/auth/recovery` for regenerating the recovery key (table above).
+- **Settings record**: kind `settings`, id `settings`, value `UserSettings { keepRawBeats: false, aiNotes: false }`. The theme stays per device (localStorage `ss-theme`).
+- **Baseline readiness**: `calibration.n` counts readings on distinct local days (or 60-s rest windows from a stress session). A baseline is ready when `n >= 3`. The app keeps one Baseline record per user and adds one reading per day to it; a new baseline replaces it.
+- **Inputs**: `LiveInput` and `FileInput` carry `kind: 'live' | 'file'`; `web/src/inputs/registry.ts` exports `INPUTS: (LiveInput | FileInput)[]` (the camera, from `./camera`, is one of them). `LiveConnection` gains optional `onSample` (waveform for the live trace), `battery()` and `onDisconnect`. `connect()` rejects with DOMException names (`NotAllowedError` for a denied permission, `NotFoundError` when no device or camera exists or the chooser was cancelled, `NotSupportedError`).
+- **HRV** (`contract/signal.ts`): `web/src/signal/hrv.ts` exports `cleanRR(rr) → {rr, dropped}` and `hrvFeatures(rr) → HrvFeatures | null` (`{hr_mean, rmssd, sdnn, n, dropped}`, null under `MIN_BEATS = 10` clean intervals).
+- **Activities**: `web/src/activities/index.ts` exports `ACTIVITIES: ActivityDef[]` (optional `blurb`). `web/src/session/index.ts` exports `StressSessionView({onDone, onCancel, live})` and `SESSION_MINUTES`. `web/src/personal/index.ts` exports `train(activity, sessions)` and `scoreWith(model, metrics)`.
+- **Camera quality**: the camera's `quality` is `good` only with the torch on (rear camera, fingertip over lens and flash); without a torch it is at most `fair`, so a webcam never feeds HRV into a score.
