@@ -30,9 +30,10 @@ async function act(p, v) {
     return { x: st.x + (c.x / 100) * st.width, y: st.y + (c.y / 100) * st.height };
   };
   if (v === 'typing-run') {
+    const passage = (await p.locator('label[for="ty-box"]').textContent()).replace('Type the passage: ', '');
     await p.locator('#ty-box').focus();
-    await p.keyboard.type('The morning train was late again, so she', { delay: 25 });
-    await p.keyboard.type(' rw', { delay: 25 });
+    await p.keyboard.type(passage.slice(0, 52), { delay: 25 });
+    await p.keyboard.type('xq', { delay: 25 });
   } else if (v === 'follow-dot-run') {
     let pt = await svgPoint('.fd-dot');
     await p.mouse.move(pt.x, pt.y);
@@ -70,7 +71,7 @@ async function act(p, v) {
     });
     await p.waitForTimeout(1200);
   } else if (v === 'tap-rhythm-run') {
-    await p.waitForTimeout(3700);
+    await p.getByText('Tap with the beat').waitFor();
     for (let i = 0; i < 3; i++) { await p.keyboard.press(' '); await p.waitForTimeout(740); }
   } else if (v === 'devices-connected' || v === 'session-rest') {
     await p.waitForTimeout(2500);

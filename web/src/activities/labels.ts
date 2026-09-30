@@ -71,7 +71,7 @@ export function formatMetric(l: MetricLabel, v: number): string {
 }
 
 /**
- * Words for a z against calm runs: under 1 SD is "about usual"; 1-2 "a little <word>";
+ * Words for a z against calm runs: under 1 SD is "about usual"; 1-2 "slightly <word>";
  * 2+ "<word>" (plain). Returns null when there is no comparison.
  */
 export function changeWords(l: MetricLabel, z: number | undefined): string | null {
@@ -80,7 +80,7 @@ export function changeWords(l: MetricLabel, z: number | undefined): string | nul
   if (a < 1) return 'About your usual';
   const w = z > 0 ? l.up : l.down;
   const cap = w[0].toUpperCase() + w.slice(1);
-  return a < 2 ? `A little ${w} than usual` : `${cap} than usual`;
+  return a < 2 ? `Slightly ${w} than usual` : `${cap} than usual`;
 }
 
 /** One short phrase for narration: the two biggest changes, e.g. "slower, more corrections". */

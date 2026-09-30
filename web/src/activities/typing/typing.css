@@ -1,4 +1,4 @@
-.ty-wrap { position: relative; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 18px 2px 20px; cursor: text; }
+.ty-wrap { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 18px; cursor: text; }
 .ty-passage { font-size: 20px; line-height: 1.75; letter-spacing: 0.005em; max-width: 60ch; text-wrap: pretty; }
 @media (max-width: 520px) { .ty-passage { font-size: 18px; line-height: 1.7; } }
 .ty-done { color: var(--ink); }
@@ -11,4 +11,4 @@
   position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; resize: none; border: 0;
   font-size: 16px; color: transparent; background: transparent; caret-color: transparent; cursor: text;
 }
-.ty-wrap:focus-within { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
+.ty-wrap:focus-within { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }

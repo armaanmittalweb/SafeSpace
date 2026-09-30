@@ -72,7 +72,7 @@ export function ActivityPicker(p: ActivityPickerProps) {
                         <span class="ap-blurb">{a.blurb}</span>
                       </span>
                       <span class="ap-meta" id={`ap-${a.id}-meta`}>
-                        <span class="ax-mono">{fmtLength(a.durationS)}</span>
+                        <span>{fmtLength(a.durationS)}</span>
                         <span>{needsPhone ? 'Needs a phone' : DEVICE_LABEL[a.device]}</span>
                         {n > 0 && <span>{n} calm {n === 1 ? 'run' : 'runs'}</span>}
                       </span>

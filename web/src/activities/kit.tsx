@@ -37,7 +37,7 @@ export function fmtClock(s: number): string {
   return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
 }
 export function fmtLength(s: number): string {
-  return s < 60 ? `${s} s` : s % 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s / 60} min`;
+  return s < 60 ? `${s} sec` : s % 60 ? `${Math.floor(s / 60)} min ${s % 60} sec` : `${s / 60} min`;
 }
 
 export function useReducedMotion(): boolean {
@@ -174,13 +174,16 @@ export function ResultView(p: { meta: Meta; result: ActivityResult; calmCount: n
               <div class="ax-row" key={l.key}>
                 <dt>{l.label}</dt>
                 <dd>{formatMetric(l, r.metrics[l.key])}{l.unit && <small>{l.unit}</small>}</dd>
-                {words && <p class="ax-change"><b>{words}</b> · change from your calm runs, not a stress score</p>}
+                {words && <p class="ax-change">{words}</p>}
               </div>
             );
           })}
         </dl>
       ) : (
         <p class="ax-lead">Too little was recorded to measure anything. Try again when you have {fmtLength(p.meta.durationS)}.</p>
+      )}
+      {r.vsBaseline && rows.length > 0 && (
+        <p class="ax-note">Compared with your {p.calmCount} calm {p.calmCount === 1 ? 'run' : 'runs'}. These describe change, not stress: a stress reading for this activity comes once SafeSpace has learned your pattern from a few stress sessions.</p>
       )}
       {!r.vsBaseline && rows.length > 0 && (
         <p class="ax-note">
