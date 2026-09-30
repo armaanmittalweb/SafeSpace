@@ -42,7 +42,7 @@ export function ModelNotes() {
 
         <div class="note">
           <h3>Engineering</h3>
-          <p>Each model is exported to ONNX to prove it is portable, and this page scores with the same arithmetic directly: four dot products and a sigmoid, checked against onnxruntime to within 10<sup>−6</sup>. Nothing leaves your browser.</p>
+          <p>Each model is exported to ONNX to prove it is portable, and this page scores with the same arithmetic directly: four dot products and a sigmoid, checked against onnxruntime to within 10<sup>−6</sup>. Your readings never leave your browser.</p>
         </div>
 
         <div class="note wide">
