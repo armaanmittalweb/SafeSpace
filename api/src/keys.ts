@@ -31,7 +31,7 @@ export function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
 
 export const sameString = (a: string, b: string) => sameBytes(enc.encode(a), enc.encode(b))
 
-async function pbkdf2(secret: string, salt: Uint8Array, iterations: number, bytes: number) {
+async function pbkdf2(secret: string, salt: Uint8Array<ArrayBuffer>, iterations: number, bytes: number) {
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), 'PBKDF2', false, ['deriveBits'])
   return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, bytes * 8))
 }

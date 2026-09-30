@@ -1,7 +1,8 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    // vite/client: the web vault client (imported by e2e tests) reads import.meta.env.
+    // DOM and vite/client: the web vault client (imported by the e2e tests) uses IndexedDB and import.meta.env.
+    "lib": ["ES2022", "DOM"],
     "types": ["@cloudflare/workers-types", "node", "vite/client"]
   },
   "include": ["."]
