@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "safespace-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-25",
+  "observability": { "enabled": true },
+  // A custom domain: Cloudflare creates the DNS record and certificate. One subdomain level, so the
+  // free Universal SSL certificate covers it.
+  "routes": [{ "pattern": "safespace-api.amittal.dev", "custom_domain": true }],
+  "vars": {
+    // Exact origins allowed to call /api with the session cookie (CORS + the CSRF check).
+    "ALLOWED_ORIGINS": "https://safespace.amittal.dev,http://localhost:5175"
+  },
+  // Secrets (wrangler secret put): PARAMS_SECRET and INTERNAL_KEY; optionally OPENROUTER_API_KEY,
+  // GROQ_API_KEY, GEMINI_API_KEY (narration). Model overrides as vars: OPENROUTER_MODEL, GROQ_MODEL, GEMINI_MODEL.
+  // PLACEHOLDER database_id: replace with the id printed by `wrangler d1 create safespace`.
+  "d1_databases": [{ "binding": "DB", "database_name": "safespace", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  "ratelimits": [
+    // 5 logins (and recovery, password and delete attempts) per minute per IP.
+    { "name": "LOGIN_LIMITER", "namespace_id": "4301", "simple": { "limit": 5, "period": 60 } },
+    // Everything else under /api, per IP. Generous: a full sync is a few requests.
+    { "name": "API_LIMITER", "namespace_id": "4302", "simple": { "limit": 300, "period": 60 } }
+  ],
+  "triggers": { "crons": ["17 3 * * *"] },
+  "dev": { "port": 8789, "local_protocol": "http" }
+}
