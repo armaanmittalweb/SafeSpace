@@ -64,7 +64,7 @@ export function baselineFrom(readings: Measurement[], id: string, createdAt: num
   const days = new Set(readings.map((r) => dayKey(r.startedAt))).size;
   return { id, createdAt, readings, calibration: { mean: cal.mean, sd: cal.sd, n: days } };
 }
-export const baselineReady = (b: Baseline | null | undefined): b is Baseline => !!b && b.calibration.n >= BASELINE_NEEDED;
+export const baselineReady = (b: Baseline | null | undefined): boolean => !!b && b.calibration.n >= BASELINE_NEEDED;
 export const baselineHasToday = (b: Baseline | null | undefined, now = Date.now()) => !!b && b.readings.some((r) => dayKey(r.startedAt) === dayKey(now));
 
 /** At least two resting readings carry the signal, so its resting mean means something. */
@@ -81,7 +81,7 @@ export function restingOf(b: Baseline | null | undefined, f: Feature): number | 
 }
 
 export function scoreMeasurement(m: Measurement | null, b: Baseline | null): CheckIn['score'] {
-  if (!m || !baselineReady(b)) return null;
+  if (!m || !b || !baselineReady(b)) return null;
   const { used } = signalsIn(m, b);
   if (!used.length) return { fused: null, bySignal: {}, baselineId: b.id };
   const z = zScores(channelsOf(m, used.includes('hrv')), b.calibration as unknown as Calibration);

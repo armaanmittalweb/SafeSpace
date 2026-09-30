@@ -24,7 +24,7 @@ export function templateNote(c: CheckIn, b: Baseline | null, baselineCount: numb
   const feel = feelingSentence(c);
   const tag = c.tags.length ? ` You tagged it "${c.tags.join('", "')}".` : '';
   if (!m) return [feel ?? 'A check-in with no measurement.', tag.trim()].filter(Boolean).join(' ');
-  if (!baselineReady(b) || !c.score) {
+  if (!b || !baselineReady(b) || !c.score) {
     const hr = m.features.hr_mean;
     const left = Math.max(0, BASELINE_NEEDED - baselineCount);
     const first = hr != null ? `Heart rate ${Math.round(hr)} bpm.` : 'No clear heart rate in this reading.';

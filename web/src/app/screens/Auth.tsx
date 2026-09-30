@@ -22,7 +22,7 @@ function PasswordInput({ id, value, onInput, autocomplete, describedBy }: { id: 
   const [show, setShow] = useState(false);
   return (
     <div class="pw">
-      <input id={id} type={show ? 'text' : 'password'} value={value} autocomplete={autocomplete} required aria-describedby={describedBy}
+      <input id={id} type={(show ? 'text' : 'password') as 'password'} value={value} autocomplete={autocomplete} required aria-describedby={describedBy}
         onInput={(e) => onInput((e.target as HTMLInputElement).value)} />
       <button type="button" class="pw-toggle" aria-pressed={show} onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
     </div>

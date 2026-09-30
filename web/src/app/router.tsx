@@ -1,5 +1,5 @@
 // A small history router: paths are real URLs (so they can be shared and indexed), links are plain <a>.
-import type { ComponentChildren, JSX } from 'preact';
+import type { AnchorHTMLAttributes, ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 
 const subs = new Set<() => void>();
@@ -23,7 +23,7 @@ export function usePath(): string {
   return p;
 }
 
-type AProps = JSX.HTMLAttributes<HTMLAnchorElement> & { href: string; children?: ComponentChildren };
+type AProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'role'> & { href: string; children?: ComponentChildren };
 export function Link({ href, onClick, ...rest }: AProps) {
   return (
     <a href={href} {...rest} onClick={(e) => {

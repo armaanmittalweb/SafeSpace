@@ -1,0 +1,341 @@
+/* The How it works recorder and /embed (the original simulator), scoped under .sim so it cannot
+   leak into the app. Generated once from the old app.css. */
+/* ---------- page frame ---------- */
+.sim { max-width: 1360px; margin: 0 auto; padding: 0 32px; }
+.sim .skip {
+  position: absolute; left: -9999px; top: 8px; z-index: 10;
+  background: var(--ink); color: var(--bg); padding: 8px 12px; text-decoration: none;
+}
+.sim .skip:focus { left: 16px; }
+.sim .masthead {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+  min-height: 60px; border-bottom: 1px solid var(--ink);
+}
+.sim .masthead h1 { display: flex; align-items: baseline; gap: 10px; font-size: inherit; font-weight: inherit; }
+.sim .wordmark { font-size: 21px; font-weight: 650; letter-spacing: -0.015em; }
+.sim .sub { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.sim .masthead nav { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+.sim .masthead nav a { text-decoration: none; color: var(--ink-2); white-space: nowrap; }
+.sim .masthead nav a:hover { color: var(--ink); text-decoration: underline; }
+.sim .lede {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--s5);
+  padding: 22px 0 26px;
+}
+.sim .lede p { max-width: 66ch; font-size: 16.5px; line-height: 1.5; color: var(--ink-2); text-wrap: pretty; }
+.sim .lede .not-medical-inline, .sim .colophon .mono {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+  border: 1px solid var(--line); padding: 5px 9px; white-space: nowrap;
+}
+.sim .kicker { font: 500 11px/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.sim /* ---------- controls ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: transparent;
+  font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap;
+}
+.sim .btn:hover:not(:disabled) { border-color: var(--ink); background: var(--sel); }
+.sim .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); min-width: 96px; justify-content: center; }
+.sim .btn.primary:hover { background: var(--ink-2); }
+.sim .btn.small { height: 28px; padding: 0 10px; font-size: 13px; }
+.sim .btn.ghost { border-color: transparent; padding: 0 8px; }
+.sim .btn[aria-pressed='true']:not(.theme-toggle) { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.sim .btn:disabled, .sim .link-btn:disabled, .sim .chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.sim .link-btn {
+  background: none; border: 0; padding: 0; font-size: 13px; color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; cursor: pointer;
+}
+.sim .link-btn:hover:not(:disabled) { color: var(--ink); text-decoration-thickness: 2px; }
+.sim input[type='range'] {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 22px; margin: 0;
+  background: transparent; cursor: pointer;
+}
+.sim input[type='range']::-webkit-slider-runnable-track { height: 2px; background: var(--line); }
+.sim input[type='range']::-moz-range-track { height: 2px; background: var(--line); }
+.sim input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 18px; margin-top: -8px;
+  background: var(--ink); border: 2px solid var(--bg); border-radius: 1px; box-sizing: content-box;
+}
+.sim input[type='range']::-moz-range-thumb { width: 10px; height: 18px; background: var(--ink); border: 2px solid var(--bg); border-radius: 1px; }
+.sim input[type='range'].edited::-webkit-slider-thumb { background: var(--stress-ink); }
+.sim input[type='range'].edited::-moz-range-thumb { background: var(--stress-ink); }
+.sim select {
+  height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg); font-size: 14.5px; font-weight: 550; cursor: pointer;
+}
+.sim /* ---------- the deck: recorder + readout ---------- */
+.deck {
+  display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 0 36px;
+  border-top: 1px solid var(--rule); padding-top: 18px;
+}
+.sim .sim-banner { display: flex; align-items: center; gap: 12px; font-size: 14.5px; font-weight: 500; margin-bottom: 10px; }
+.sim .stamp {
+  font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--stress-ink); border: 1.5px solid var(--stress-ink); padding: 2px 7px 1px;
+}
+.sim .recorder { position: relative; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 8px 0 2px; min-height: 120px; }
+.sim .recorder svg { display: block; overflow: visible; }
+.sim .recorder .seekable { cursor: crosshair; touch-action: pan-y; }
+.sim .recorder text { font-family: var(--mono); }
+.sim .paper { fill: var(--paper); }
+.sim .grid { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.sim .grid.major { stroke: var(--grid-major); }
+.sim .grid.zero { stroke: var(--ink); stroke-opacity: 0.4; }
+.sim .hatch-line { stroke: var(--grid-major); stroke-width: 1.4; }
+.sim .cal-label text { font-size: 10px; letter-spacing: 0.14em; fill: var(--muted); }
+.sim .event text { font-size: 10px; letter-spacing: 0.08em; fill: var(--muted); }
+.sim .event.on text { fill: var(--ink); font-weight: 500; }
+.sim .event-tick { stroke: var(--grid-major); stroke-dasharray: 2 3; }
+.sim .motion { fill: var(--ink); fill-opacity: 0.5; }
+.sim .axis { font-size: 10.5px; fill: var(--muted); }
+.sim .axis.small { font-size: 9.5px; letter-spacing: 0.1em; }
+.sim .fill-stress { fill: var(--stress); fill-opacity: var(--fill-alpha); }
+.sim .fill-calm { fill: var(--calm); fill-opacity: var(--fill-alpha); }
+.sim .pen { fill: none; stroke: var(--ink-2); stroke-linejoin: round; transition: opacity 0.15s, stroke 0.15s; }
+.sim .pen-temp { stroke-linecap: round; }
+.sim .pen.fused { stroke: var(--ink); stroke-width: 2.6; }
+.sim .pen.hot { stroke: var(--ink); }
+.sim .faded { opacity: 0.16; }
+.sim .carriage { stroke: var(--ink); stroke-opacity: 0.35; }
+.sim .tip { fill: var(--paper); stroke: var(--ink-2); stroke-width: 1.5; transition: opacity 0.15s; }
+.sim .tip.edited { stroke: var(--stress-ink); stroke-dasharray: 2 1.5; }
+.sim .fused-tip { fill: var(--ink); stroke: var(--paper); }
+.sim .pen-label { font-size: 10.5px; fill: var(--ink-2); transition: opacity 0.15s; }
+.sim .gauge-scale { stroke: var(--ink); stroke-width: 1; }
+.sim .gauge-end { font-size: 10px; letter-spacing: 0.04em; }
+.sim .gauge-end.stress { fill: var(--stress-ink); }
+.sim .gauge-end.calm { fill: var(--calm-ink); }
+.sim .needle-head { fill: var(--ink); }
+.sim .needle.stress .needle-head { fill: var(--stress); }
+.sim .needle.calm .needle-head { fill: var(--calm); }
+.sim .needle-value { font-size: 13px; font-weight: 500; fill: var(--ink); }
+.sim .needle.stress .needle-value { fill: var(--stress-ink); }
+.sim .needle.calm .needle-value { fill: var(--calm-ink); }
+.sim .needle-trace { stroke: var(--ink); stroke-opacity: 0.3; stroke-dasharray: 1 3; }
+.sim .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 10px 0 0; font-size: 12.5px; color: var(--muted); }
+.sim .legend li { display: inline-flex; align-items: center; gap: 7px; }
+.sim .legend .swatch, .sim .legend svg { color: var(--ink-2); }
+.sim .legend .fused-key { color: var(--ink); font-weight: 500; }
+.sim .legend .fused-key svg { color: var(--ink); }
+.sim .legend .off { text-decoration: line-through; color: var(--muted); }
+.sim .legend .off svg { opacity: 0.4; }
+.sim .key-motion { display: inline-block; width: 14px; height: 6px; background: var(--ink); opacity: 0.5; }
+.sim .key-cal {
+  display: inline-block; width: 14px; height: 10px; border: 1px solid var(--grid-major);
+  background: repeating-linear-gradient(45deg, var(--grid-major) 0 1.4px, transparent 1.4px 4px);
+}
+.sim .transport { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.sim .scrub { flex: 1; min-width: 120px; }
+.sim .clock { font-size: 13px; white-space: nowrap; }
+.sim .clock .of { color: var(--muted); }
+.sim .speed { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); }
+.sim .speed button {
+  height: 32px; min-width: 38px; border: 0; background: transparent; font: 500 12.5px var(--mono); cursor: pointer;
+}
+.sim .speed button + button { border-left: 1px solid var(--line); }
+.sim .speed button.on { background: var(--ink); color: var(--bg); }
+.sim /* ---------- readout ---------- */
+.readout { border-left: 1px solid var(--rule); padding-left: 28px; min-width: 0; }
+.sim .now { padding-bottom: 16px; border-bottom: 1px solid var(--rule); }
+.sim .now-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.sim .motion-chip { color: var(--stress-ink); border: 1px solid var(--stress-ink); padding: 0 6px; }
+.sim .now-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; }
+.sim .now-label { font-size: 13px; color: var(--muted); flex-basis: 100%; }
+.sim .now-value { font-size: 46px; font-weight: 500; line-height: 1; letter-spacing: -0.03em; }
+.sim .now-value.stress, .sim .pen-score.stress, .sim .embed-now.stress { color: var(--stress-ink); }
+.sim .now-value.calm, .sim .pen-score.calm, .sim .embed-now.calm { color: var(--calm-ink); }
+.sim .now-word { font-size: 17px; font-weight: 550; }
+.sim .now-value .placeholder { color: var(--muted); font-weight: 400; }
+.sim .now-note { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.sim .now-note.edited { color: var(--ink); }
+.sim .narration { padding: 18px 0 20px; }
+.sim .narration .source { margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--rule); text-transform: none; letter-spacing: 0; }
+.sim .narration .summary { margin-top: 10px; font-size: 19px; line-height: 1.35; font-weight: 550; letter-spacing: -0.005em; text-wrap: pretty; }
+.sim .narration.empty .summary { color: var(--ink-2); }
+.sim .tip-line { margin-top: 10px; font-size: 15px; color: var(--ink-2); text-wrap: pretty; }
+.sim .tip-mark {
+  font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: 0.1em;
+  border: 1px solid var(--line); padding: 1px 5px; margin-right: 4px; vertical-align: 1px;
+}
+.sim .caveat { margin-top: 12px; padding-left: 10px; border-left: 2px solid var(--stress); font-size: 13.5px; color: var(--ink-2); }
+.sim .lines { margin-top: 14px; font-size: 13px; color: var(--muted); }
+.sim .lines li { padding: 5px 0; border-top: 1px solid var(--rule); }
+.sim .pens-head { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--ink); padding-top: 14px; }
+.sim .pens-help { margin: 6px 0 4px; font-size: 12.5px; color: var(--muted); }
+.sim .empty-pens { margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+.sim .pen-row { padding: 12px 0 12px; border-bottom: 1px solid var(--rule); }
+.sim .pen-head { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; }
+.sim .pen-head .swatch { color: var(--ink-2); }
+.sim .pen-head h3 { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sim .tag {
+  font: 500 10px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); border: 1px solid var(--line); padding: 3px 5px 2px; margin-right: 6px; vertical-align: 1px;
+}
+.sim .tag.weak { border-style: dashed; }
+.sim .pen-score { font-size: 18px; font-weight: 500; min-width: 54px; text-align: right; }
+.sim .pen-score.none { color: var(--muted); }
+.sim .lift { position: relative; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px; color: var(--muted); }
+.sim .lift input { position: absolute; inset: 0; z-index: 1; opacity: 0; margin: 0; cursor: pointer; }
+.sim .lift-track { width: 28px; height: 16px; border: 1px solid var(--line); border-radius: 8px; position: relative; flex: none; }
+.sim .lift-knob { position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); transition: transform 0.15s; }
+.sim .lift input:checked + .lift-track { background: var(--ink); border-color: var(--ink); }
+.sim .lift input:checked + .lift-track .lift-knob { transform: translateX(12px); background: var(--bg); }
+.sim .lift input:focus-visible + .lift-track { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sim .lift-text { min-width: 54px; }
+.sim .lifted .pen-head .swatch { opacity: 0.4; }
+.sim .lifted .pen-head h3 { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+.sim .lifted .pen-score, .sim .lifted .pen-score.stress, .sim .lifted .pen-score.calm { color: var(--muted); }
+.sim .lifted .contrib .bar { opacity: 0.45; }
+.sim .pen-note { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+.sim .pen-note.gap { color: var(--ink-2); }
+.sim .contrib { width: 100%; margin: 8px 0 0; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+.sim .contrib tr > :nth-child(1) { width: 33%; }
+.sim .contrib tr > :nth-child(2) { width: 27%; }
+.sim .contrib tr > :nth-child(3) { width: 14%; }
+.sim .contrib tr > :nth-child(4) { width: 26%; }
+.sim .contrib .edit-row td { width: auto; }
+.sim .contrib th { text-align: left; font-weight: 400; color: var(--ink-2); padding: 2px 8px 2px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sim .contrib td { padding: 2px 0; }
+.sim .contrib .val { text-align: right; padding-right: 10px; white-space: nowrap; }
+.sim .contrib .edit-row td { padding: 0 0 6px; }
+.sim .contrib .edit-row input { display: block; }
+.sim .contrib .unit { color: var(--muted); }
+.sim .contrib .z { color: var(--muted); font-size: 11.5px; white-space: nowrap; padding-right: 8px; }
+.sim .contrib .c { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.sim .contrib .c .mono { min-width: 42px; text-align: right; }
+.sim .contrib .bias th, .sim .contrib .bias .mono { color: var(--muted); }
+.sim .bar-axis { stroke: var(--line); }
+.sim .bar-stress { fill: var(--stress); }
+.sim .bar-calm { fill: var(--calm); }
+.sim .bar-over { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
+.sim /* ---------- sections ---------- */
+.builder, .sim .notes { margin-top: 72px; border-top: 1px solid var(--ink); padding-top: 20px; }
+.sim .section-head { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; margin-bottom: 28px; }
+.sim .section-head h2 { font-size: 26px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+.sim .section-head p { max-width: 62ch; color: var(--ink-2); font-size: 15px; }
+.sim .builder-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 56px; }
+.sim fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sim legend { padding: 0; font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.sim .hint { font-size: 13px; color: var(--muted); margin-bottom: 16px; max-width: 60ch; }
+.sim .base-group { margin-bottom: 14px; }
+.sim .base-group .kicker { margin-bottom: 2px; }
+.sim .field { display: grid; grid-template-columns: 124px minmax(0, 1fr) 118px; align-items: center; gap: 14px; min-height: 32px; }
+.sim .field label { font-size: 14px; }
+.sim .field output { font-size: 13px; text-align: right; }
+.sim .field .unit, .sim output .unit { color: var(--muted); }
+.sim .cal-readout { font-size: 12px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 10px; }
+.sim .steps { border-bottom: 1px solid var(--rule); }
+.sim .step { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-top: 1px solid var(--rule); }
+.sim .step-n { font-size: 12px; color: var(--muted); padding-top: 7px; }
+.sim .step-name { display: block; font-size: 14.5px; font-weight: 550; padding-top: 5px; }
+.sim .step-blurb { display: block; font-size: 13px; color: var(--muted); margin-top: 5px; max-width: 54ch; }
+.sim .step-min { font-size: 12.5px; color: var(--muted); padding-top: 7px; }
+.sim .step-ctl { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.sim .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: var(--radius); }
+.sim .stepper button { width: 30px; height: 30px; border: 0; background: transparent; font-size: 16px; cursor: pointer; }
+.sim .stepper button:hover:not(:disabled) { background: var(--sel); }
+.sim .stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.sim .stepper span { min-width: 56px; text-align: center; font-size: 12.5px; }
+.sim .add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 0; }
+.sim .add-row .kicker { margin-right: 4px; }
+.sim .chip { height: 30px; padding: 0 12px; border: 1px dashed var(--line); border-radius: var(--radius); background: transparent; font-size: 13.5px; cursor: pointer; }
+.sim .chip:hover:not(:disabled) { border-style: solid; border-color: var(--ink); }
+.sim .script-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--muted); }
+.sim .script-actions { display: inline-flex; gap: 18px; }
+.sim .source-note { margin-top: 14px; }
+.sim .notes-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px 44px; }
+.sim .note h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.sim .note p, .sim .note li { font-size: 14.5px; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+.sim .note.wide { grid-column: 1 / -1; }
+.sim .note.cite { grid-column: span 2; }
+.sim .dash li { position: relative; padding-left: 16px; margin-bottom: 6px; }
+.sim .dash li::before { content: '\2013'; position: absolute; left: 0; color: var(--muted); }
+.sim .results { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
+.sim .results th, .sim .results td { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: middle; }
+.sim .results thead th { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.sim .results tbody th { font-weight: 500; white-space: nowrap; }
+.sim .results tbody th .swatch { color: var(--ink-2); margin-right: 6px; vertical-align: middle; }
+.sim .results .num { text-align: right; white-space: nowrap; }
+.sim .results .inputs { color: var(--muted); font-size: 13px; }
+.sim .results .sd { color: var(--muted); font-size: 12px; }
+.sim .results .auc { margin-left: 12px; vertical-align: middle; }
+.sim .results .fused-row th, .sim .results .fused-row td { border-top: 1px solid var(--ink); border-bottom: 0; font-weight: 600; }
+.sim .auc-track { fill: var(--rule); }
+.sim .auc-chance { stroke: var(--muted); }
+.sim .auc-fill { fill: var(--ink); }
+.sim .fine { font-size: 13px !important; color: var(--muted) !important; margin-top: 10px; max-width: 90ch; }
+.sim .not-medical { margin-top: 14px; display: inline-block; border: 1px solid var(--ink); padding: 10px 14px; color: var(--ink) !important; font-weight: 550; }
+.sim .colophon {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  margin-top: 72px; padding: 20px 0 40px; border-top: 1px solid var(--rule); font-size: 13px; color: var(--muted);
+}
+/* ---------- responsive ---------- */
+@media (max-width: 1180px) {
+.sim .deck { grid-template-columns: minmax(0, 1fr) 350px; gap: 0 28px; }
+.sim .readout { padding-left: 22px; }
+}
+@media (max-width: 920px) {
+.sim .deck { grid-template-columns: minmax(0, 1fr); }
+.sim .readout { border-left: 0; padding-left: 0; margin-top: 26px; border-top: 1px solid var(--ink); padding-top: 14px; }
+.sim .builder-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+.sim .notes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sim .note.cite { grid-column: 1 / -1; }
+.sim .section-head { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.sim .lede { grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
+.sim .lede .not-medical-inline { justify-self: start; }
+}
+@media (max-width: 600px) {
+.sim { padding: 0 16px; }
+.sim .wordmark { font-size: 19px; }
+.sim .masthead .sub { display: none; }
+.sim .masthead nav { gap: 14px; font-size: 13.5px; }
+.sim .theme-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sim .lede p { font-size: 15.5px; }
+.sim .sim-banner { font-size: 13.5px; align-items: flex-start; }
+.sim .transport { flex-wrap: wrap; gap: 10px; }
+.sim .speed { margin-left: auto; }
+.sim .scrub { order: 5; flex: 1 1 60%; }
+.sim .clock { order: 6; }
+.sim .transport.compact { flex-wrap: nowrap; }
+.sim .transport.compact .scrub { order: 0; flex: 1 1 80px; min-width: 60px; }
+.sim .transport.compact .clock { order: 0; }
+.sim .transport.compact .clock .of { display: none; }
+.sim .now-value { font-size: 40px; }
+.sim .notes-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+.sim .field { grid-template-columns: 96px minmax(0, 1fr) 96px; gap: 10px; }
+.sim .pen-head { grid-template-columns: 26px minmax(0, 1fr) auto auto; }
+.sim .lift-text { display: none; }
+.sim .results .inputs, .sim .results thead th:nth-child(2) { display: none; }
+.sim .results .auc { display: none; }
+.sim .step { grid-template-columns: 24px minmax(0, 1fr); }
+.sim .step-ctl { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; }
+.sim .builder, .sim .notes { margin-top: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+.sim *, .sim *::before, .sim *::after { transition: none !important; animation: none !important; }
+}
+.sim /* ---------- /embed ---------- */
+html.is-embed, html.is-embed body { background: var(--bg); }
+.is-embed .sim { max-width: none; padding: 0; }
+.sim .embed { padding: 12px 14px 10px; }
+.sim .embed-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 13px; margin-bottom: 6px; }
+.sim .embed-claim { color: var(--ink-2); }
+.sim .embed-now { margin-left: auto; font-size: 13px; }
+.sim .embed .recorder { padding-top: 4px; }
+.sim .embed-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 10px; }
+.sim .transport.compact { margin-top: 0; flex: 1 1 280px; }
+.sim .pull-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.sim .pull {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: var(--radius); background: transparent; cursor: pointer; font-size: 12px;
+}
+.sim .pull .swatch { color: var(--ink-2); }
+.sim .pull:hover { border-color: var(--ink); }
+.sim .pull.off { color: var(--muted); }
+.sim .pull.off .swatch { opacity: 0.4; }
+.sim .pull.off .mono { text-decoration: line-through; }
+.sim .embed-foot { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.sim /* weak pens write in a quieter ink so the strong pens and the fused trace lead */
+.pen-temp, .sim .pen-hrv { stroke: var(--muted); }
+@media (min-width: 921px) {
+.sim .bench { position: sticky; top: 16px; align-self: start; }
+}

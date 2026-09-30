@@ -1,7 +1,7 @@
 // Line icons drawn for SafeSpace: 24-unit grid, 1.6 stroke, round joins, currentColor.
-import type { JSX } from 'preact';
+import type { JSX, SVGAttributes } from 'preact';
 
-type P = { size?: number } & JSX.SVGAttributes<SVGSVGElement>;
+type P = { size?: number } & SVGAttributes<SVGSVGElement>;
 const Svg = ({ size = 24, children, ...rest }: P & { children: JSX.Element | JSX.Element[] }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" {...rest}>{children}</svg>

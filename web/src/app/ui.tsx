@@ -1,5 +1,5 @@
 // Shared pieces: the score scale, day cells, the quality meter, the live trace, form controls.
-import type { ComponentChildren, JSX } from 'preact';
+import type { ComponentChildren, CSSProperties } from 'preact';
 import { useEffect, useId, useRef, useState } from 'preact/hooks';
 import type { CheckIn, Quality } from '../contract/records';
 import type { SyncStatus } from '../contract/vault';
@@ -40,7 +40,7 @@ export function ScoreFigure({ score, label = 'Score', size = 'xl' }: { score: nu
 }
 
 /** Background for a day cell: calm blue or stress red, stronger the further from zero. */
-export function dayStyle(score: number | null | undefined): JSX.CSSProperties | undefined {
+export function dayStyle(score: number | null | undefined): CSSProperties | undefined {
   if (score == null) return undefined;
   const pct = Math.round(14 + Math.min(1, Math.abs(score)) * 50);
   return { background: `color-mix(in oklab, var(--${score >= 0 ? 'stress' : 'calm'}) ${pct}%, var(--card))` };
