@@ -2,7 +2,7 @@
 // a lit lens, at a known heart rate. A systolic wave and a smaller dicrotic wave per beat, breathing-
 // linked variation in the beat intervals, baseline wander, sensor noise, frame-time jitter, and on
 // request a motion burst and a run of dropped frames.
-import type { Frame, MotionSample } from '../../src/pulse/ppg';
+import type { Frame, MotionSample } from './ppg';
 
 export interface SynthOptions {
   bpm: number;

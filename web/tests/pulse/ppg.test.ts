@@ -4,7 +4,7 @@
 import { describe, expect, test } from 'vitest';
 import { measurementFromFrames } from '../../src/pulse/measure';
 import { analyze, type Frame } from '../../src/pulse/ppg';
-import { synth, type SynthOptions } from './synth';
+import { synth, type SynthOptions } from '../../src/pulse/synth';
 
 const trueRmssd = (rr: number[]) => Math.sqrt(rr.slice(1).reduce((a, x, i) => a + (x - rr[i]) ** 2, 0) / (rr.length - 1));
 
