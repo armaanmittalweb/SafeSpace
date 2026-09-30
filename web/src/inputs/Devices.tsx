@@ -134,11 +134,6 @@ export function BluetoothRow(p: { provider: LiveInput; avail: Avail; state: Conn
         <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{DETAIL[p.provider.id]}</p>
         <Meta gives={p.provider.gives.map((g) => GIVES[g]).join(', ')} where={WORKS_ON[p.provider.id]} />
-        {blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}
-        {p.state.kind === 'connecting' && <p class="dv-status" role="status">Choose your device in the browser's list. Straps wake up when worn with damp electrodes.</p>}
-        {p.state.kind === 'error' && p.state.name !== 'AbortError' && (
-          <p class="dv-reason" role="alert">{p.state.message}</p>
-        )}
       </div>
       <div class="dv-row-act">
         {!blocked && (
@@ -146,6 +141,11 @@ export function BluetoothRow(p: { provider: LiveInput; avail: Avail; state: Conn
             {p.state.kind === 'connecting' ? 'Connecting…' : p.connected ? 'Switch device' : p.state.kind === 'error' ? 'Try again' : 'Connect'}
           </button>
         )}
+      </div>
+      <div class="dv-row-msg">
+        {blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}
+        {p.state.kind === 'connecting' && <p class="dv-status" role="status">Choose your device in the browser's list. Straps wake up when worn with damp electrodes.</p>}
+        {p.state.kind === 'error' && p.state.name !== 'AbortError' && <p class="dv-reason" role="alert">{p.state.message}</p>}
       </div>
     </li>
   );
@@ -159,9 +159,9 @@ export function CameraRow(p: { provider: LiveInput; avail: Avail }) {
         <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{DETAIL.camera}</p>
         <Meta gives="Heart rate, HRV (noisier than a strap)" where={WORKS_ON.camera} />
-        {blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}
       </div>
       <div class="dv-row-act"><span class="dv-inline">{blocked ? '' : 'Used in a check-in'}</span></div>
+      <div class="dv-row-msg">{blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}</div>
     </li>
   );
 }
@@ -179,6 +179,13 @@ export function ImportRow(p: { provider: FileInputInfo; state: ImportState; onFi
         <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{p.provider.how}</p>
         <Meta gives={p.provider.brings} where="Any browser" />
+      </div>
+      <div class="dv-row-act">
+        <input id={id} type="file" accept={p.provider.accept} class="dv-file" disabled={busy}
+          onChange={(e) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) p.onFile(f); (e.currentTarget as HTMLInputElement).value = ''; }} />
+        <label for={id} class={`ax-btn${busy ? ' disabled' : ''}`} aria-disabled={busy}>Choose file</label>
+      </div>
+      <div class="dv-row-msg">
         {p.state.kind === 'reading' && (
           <div class="dv-progress" role="progressbar" aria-label={`Reading ${p.state.fileName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.state.fraction * 100)}>
             <i style={{ transform: `scaleX(${p.state.fraction})` }} />
@@ -187,11 +194,6 @@ export function ImportRow(p: { provider: FileInputInfo; state: ImportState; onFi
         )}
         {p.state.kind === 'done' && <p class="dv-done" role="status">{p.state.summary}</p>}
         {p.state.kind === 'error' && <p class="dv-reason" role="alert">{p.state.message}</p>}
-      </div>
-      <div class="dv-row-act">
-        <input id={id} type="file" accept={p.provider.accept} class="dv-file" disabled={busy}
-          onChange={(e) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) p.onFile(f); (e.currentTarget as HTMLInputElement).value = ''; }} />
-        <label for={id} class={`ax-btn${busy ? ' disabled' : ''}`} aria-disabled={busy}>{p.state.kind === 'done' ? 'Import another' : 'Choose file'}</label>
       </div>
     </li>
   );
