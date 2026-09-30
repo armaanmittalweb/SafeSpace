@@ -1,0 +1,7 @@
+# Copy to .dev.vars for `npm run dev` (wrangler dev --port 8789). Never commit .dev.vars.
+PARAMS_SECRET=local-params-secret-change-me
+INTERNAL_KEY=local-internal-key
+# Optional: narration providers. Leave unset and /api/narrate answers 503 (the app uses templates).
+# OPENROUTER_API_KEY=
+# GROQ_API_KEY=
+# GEMINI_API_KEY=
