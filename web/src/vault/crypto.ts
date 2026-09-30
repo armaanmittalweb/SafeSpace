@@ -30,8 +30,8 @@ export interface Sealed { iv: string; ct: string }
 type Bytes = Uint8Array<ArrayBuffer>;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-const subtle = () => globalThis.crypto.subtle;
-const random = (n: number): Bytes => globalThis.crypto.getRandomValues(new Uint8Array(n));
+const subtle = () => crypto.subtle;
+const random = (n: number): Bytes => crypto.getRandomValues(new Uint8Array(n));
 
 export function b64url(bytes: Uint8Array): string {
   let s = '';
