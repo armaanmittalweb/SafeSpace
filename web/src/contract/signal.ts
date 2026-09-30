@@ -2,7 +2,7 @@
 //
 //   export function cleanRR(rr: number[]): { rr: number[]; dropped: number }
 //     drops RR outside 300–2000 ms, then any interval differing > 20% from the median of its
-//     neighbours (up to 2 each side).
+//     neighbours (up to 5 each side; amended by the inputs agent: 2 let two adjacent artefacts through).
 //   export function hrvFeatures(rr: number[]): HrvFeatures | null
 //     cleans first; null when fewer than MIN_BEATS intervals survive.
 
