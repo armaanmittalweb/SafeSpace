@@ -1,6 +1,7 @@
-// The browser-side vault client (vault agent, web/src/vault/index.ts exports `vault: Vault`).
-// Amendment (app agent): the contract described only the HTTP API; this is the surface the app calls.
-// Every method does its crypto locally; the server only ever sees what the HTTP API table lists.
+// The surface the app's screens call for accounts and records. The vault agent's web/src/vault/
+// (signUp, signIn, resume, unlock, … and createVaultStore) is adapted to it in src/app/vault/, so
+// screens never depend on the vault module's internals. Every method does its crypto locally; the
+// server only ever sees what the HTTP API table lists.
 import type { ApiErrorCode, Me, NarrationFacts, RecordKind, SessionInfo } from './records';
 
 export interface SyncStatus {
@@ -31,8 +32,10 @@ export interface VaultError extends Error {
 }
 
 export interface Vault {
-  /** Restores the session from the cookie and the stored key; null when signed out. Never prompts. */
-  restore(): Promise<Me | null>;
+  /** Restores the session from the cookie and the stored key; null when signed out. `locked` when the
+   * cookie is valid but this device has no key (it asks for the password once, then `unlock`). Never prompts. */
+  restore(): Promise<{ me: Me; locked: boolean } | null>;
+  unlock(password: string): Promise<Me>;
   /** Creates the account; resolves with the recovery key (8 groups of 4 Crockford base32 chars) to show once. */
   signUp(email: string, password: string): Promise<{ me: Me; recoveryKey: string }>;
   signIn(email: string, password: string): Promise<Me>;
