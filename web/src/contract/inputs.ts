@@ -1,11 +1,6 @@
 // The input interface: providers register in web/src/inputs/registry.ts; the app consumes them.
 import type { InputSource, Measurement, Quality, Signal } from './records';
 
-// Re-exported so modules written against the inputs agent's first copy of this file
-// (which held the record shapes too) keep compiling against this one.
-export type { BeatSeries, FeatureName, InputSource, Measurement, Quality, Signal, ActivityId, ActivityResult, StressSession, PersonalModel } from './records';
-export type { ActivityDef, ActivityProps } from './activities';
-
 export type Availability = { ok: true } | { ok: false; reason: string };
 
 export interface InputProvider {
@@ -36,21 +31,22 @@ export interface LiveConnection {
 }
 
 export interface LiveInput extends InputProvider {
+  kind: 'live';
   /** must be called from a click (Web Bluetooth and camera both need a gesture) */
   connect(): Promise<LiveConnection>;
 }
 
 export interface FileInput extends InputProvider {
+  kind: 'file';
   /** ".zip,.xml" */
   accept: string;
   /** parsed in a Web Worker, never uploaded */
   parse(file: File, onProgress?: (fraction: number) => void): Promise<{ measurements: Measurement[]; summary: string }>;
 }
 
-/** web/src/inputs/registry.ts exports `INPUTS: (LiveInput | FileInput)[]` (amendment, app agent). */
+/** Amendment (app agent): `kind` tells live and file providers apart. web/src/inputs/registry.ts exports
+ * `INPUTS: (LiveInput | FileInput)[]` in display order (connected devices first is the app's job). */
 export type AnyInput = LiveInput | FileInput;
-export const isLive = (p: AnyInput): p is LiveInput => 'connect' in p;
-export const isFile = (p: AnyInput): p is FileInput => 'parse' in p;
 
 /** Errors thrown by connect(): `name` tells the app which designed state to show. */
 export type InputErrorName = 'NotAllowedError' | 'NotFoundError' | 'NotSupportedError' | 'AbortError' | 'NetworkError';

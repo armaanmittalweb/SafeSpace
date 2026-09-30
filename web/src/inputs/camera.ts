@@ -116,6 +116,7 @@ function pumpFor(stream: MediaStream, track: MediaStreamTrack, torch: boolean, d
 
 export const camera: LiveInput = {
   id: 'camera',
+  kind: 'live',
   label: 'Phone camera',
   gives: ['hr', 'hrv'],
   async available() {

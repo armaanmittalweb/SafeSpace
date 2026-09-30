@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  beatFeatures, beatQuality, beatTimes, cleanRR, hrMean, measurementFromHr, measurementFromRR, median, restingHr,
+  beatFeatures, beatQuality, beatTimes, cleanRR, hrMean, hrvFeatures, measurementFromHr, measurementFromRR, median, restingHr,
   restingHrFromBeats, rmssd, sd, sdnn, WINDOW_S, windowBeats,
 } from '../../src/signal/hrv';
 
@@ -16,7 +16,8 @@ describe('cleanRR', () => {
     const rr = series(80);
     const c = cleanRR(rr);
     expect(c.rejectedFraction).toBe(0);
-    expect(c.clean).toEqual(rr);
+    expect(c.rr).toEqual(rr);
+    expect(c.dropped).toBe(0);
   });
 
   it('drops intervals outside 300..2000 ms', () => {
@@ -33,7 +34,8 @@ describe('cleanRR', () => {
     expect(c.kept[3]).toBe(false);
     expect(c.kept[6]).toBe(false);
     expect(c.kept[7]).toBe(false);
-    expect(c.clean.every((x) => x > 700 && x < 900)).toBe(true);
+    expect(c.dropped).toBe(3);
+    expect(c.rr.every((x) => x > 700 && x < 900)).toBe(true);
     expect(c.rejectedFraction).toBeCloseTo(3 / 12);
   });
 
@@ -51,7 +53,7 @@ describe('cleanRR', () => {
 
   it('handles empty and tiny inputs', () => {
     expect(cleanRR([]).rejectedFraction).toBe(0);
-    expect(cleanRR([800]).clean).toEqual([800]);
+    expect(cleanRR([800]).rr).toEqual([800]);
     expect(cleanRR([NaN, 800]).kept).toEqual([false, true]);
   });
 });
@@ -99,6 +101,18 @@ describe('beatFeatures', () => {
     expect(hrMean(rr)).toBeCloseTo(60000 / (rr.reduce((a, b) => a + b) / rr.length), 6);
     expect(rmssd(rr)).toBeGreaterThan(20);
     expect(sdnn(rr)).toBeGreaterThan(20);
+  });
+});
+
+describe('hrvFeatures (contract helper)', () => {
+  it('returns null under ten clean intervals and features otherwise', () => {
+    expect(hrvFeatures([800, 810, 790, 805, 800, 795, 810, 800, 790])).toBeNull();
+    const rr = [800, 820, 800, 820, 800, 1700, 820, 800, 820, 800, 820, 800, 820, 800];
+    const f = hrvFeatures(rr)!;
+    expect(f.n).toBe(13);
+    expect(f.dropped).toBe(1);
+    expect(f.rmssd).toBeCloseTo(20, 6);
+    expect(f.hr_mean).toBeCloseTo(60000 / 809.23, 1);
   });
 });
 

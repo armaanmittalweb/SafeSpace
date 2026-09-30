@@ -9,6 +9,7 @@ import { synth } from '../pulse/synth';
 export function fakeCamera(mode: string, bpm: number): LiveInput {
   return {
     id: 'camera',
+    kind: 'live',
     label: 'Phone camera',
     gives: ['hr', 'hrv'],
     async available() { return { ok: true }; },

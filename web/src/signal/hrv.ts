@@ -11,7 +11,8 @@
 // (ddof 1) of the clean beats. Coverage (clean beats / beats expected in the window)
 // gates validity the same way: HR needs >= 40%, HRV needs >= 60% and >= 10 differences.
 import models from '../model/models.json';
-import type { BeatSeries, InputSource, Measurement, Quality } from '../contract/inputs';
+import type { BeatSeries, InputSource, Measurement, Quality } from '../contract/records';
+import { MIN_BEATS, type HrvFeatures } from '../contract/signal';
 
 export const RR_MIN_MS = 300;
 export const RR_MAX_MS = 2000;
@@ -46,12 +47,12 @@ export function sd(xs: readonly number[]): number {
 }
 
 export interface Cleaned {
-  /** The input intervals, unchanged. */
+  /** Clean intervals in order (contract: cleanRR(rr) -> {rr, dropped}). */
   rr: number[];
-  /** kept[i] is true when rr[i] survived cleaning. */
+  /** Number of intervals rejected. */
+  dropped: number;
+  /** kept[i] is true when input[i] survived cleaning. */
   kept: boolean[];
-  /** Clean intervals in order. */
-  clean: number[];
   /** Share of the input rejected, 0..1 (0 for an empty input). */
   rejectedFraction: number;
 }
@@ -73,7 +74,7 @@ export function cleanRR(rr: readonly number[]): Cleaned {
     kept[idx[j]] = Math.abs(rr[idx[j]] - m) <= MAX_REL_DEV * m;
   }
   const clean = rr.filter((_, i) => kept[i]);
-  return { rr: [...rr], kept, clean, rejectedFraction: n ? (n - clean.length) / n : 0 };
+  return { rr: clean, dropped: n - clean.length, kept, rejectedFraction: n ? (n - clean.length) / n : 0 };
 }
 
 export interface BeatFeatures {
@@ -96,15 +97,15 @@ export interface BeatFeatures {
 export function beatFeatures(rr: readonly number[], durationS?: number): BeatFeatures {
   const c = cleanRR(rr);
   const out: BeatFeatures = {
-    hr_mean: null, rmssd: null, sdnn: null, nBeats: rr.length, nClean: c.clean.length,
+    hr_mean: null, rmssd: null, sdnn: null, nBeats: rr.length, nClean: c.rr.length,
     coverage: 0, rejectedFraction: c.rejectedFraction, hrValid: false, hrvValid: false,
   };
-  if (c.clean.length < 3) return out;
+  if (c.rr.length < 3) return out;
   const dur = durationS ?? rr.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0) / 1000;
-  const expected = (dur * 1000) / median(c.clean);
-  out.coverage = expected > 0 ? Math.min(c.clean.length / expected, 1.5) : 0;
+  const expected = (dur * 1000) / median(c.rr);
+  out.coverage = expected > 0 ? Math.min(c.rr.length / expected, 1.5) : 0;
   if (out.coverage >= HR_MIN_COVERAGE) {
-    out.hr_mean = 60000 / mean(c.clean);
+    out.hr_mean = 60000 / mean(c.rr);
     out.hrValid = true;
   }
   if (out.coverage >= HRV_MIN_COVERAGE) {
@@ -112,11 +113,30 @@ export function beatFeatures(rr: readonly number[], durationS?: number): BeatFea
     for (let i = 1; i < rr.length; i++) if (c.kept[i] && c.kept[i - 1]) dd.push(rr[i] - rr[i - 1]);
     if (dd.length >= HRV_MIN_DIFFS) {
       out.rmssd = Math.sqrt(mean(dd.map((d) => d * d)));
-      out.sdnn = sd(c.clean);
+      out.sdnn = sd(c.rr);
       out.hrvValid = true;
     }
   }
   return out;
+}
+
+/**
+ * Contract helper (contract/signal.ts): cleans, then HR and HRV over all clean intervals
+ * with no coverage gate; null under MIN_BEATS clean intervals. rmssd uses only pairs of
+ * adjacent clean intervals.
+ */
+export function hrvFeatures(rr: readonly number[]): HrvFeatures | null {
+  const c = cleanRR(rr);
+  if (c.rr.length < MIN_BEATS) return null;
+  const dd: number[] = [];
+  for (let i = 1; i < rr.length; i++) if (c.kept[i] && c.kept[i - 1]) dd.push(rr[i] - rr[i - 1]);
+  return {
+    hr_mean: 60000 / mean(c.rr),
+    rmssd: dd.length ? Math.sqrt(mean(dd.map((d) => d * d))) : NaN,
+    sdnn: sd(c.rr),
+    n: c.rr.length,
+    dropped: c.dropped,
+  };
 }
 
 export const hrMean = (rr: readonly number[], durationS?: number) => beatFeatures(rr, durationS).hr_mean;

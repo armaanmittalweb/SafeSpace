@@ -1,6 +1,23 @@
-// web/src/signal/hrv.ts (inputs agent) is the one shared beat-to-beat feature extractor. Its API:
-//   cleanRR(rr) → { rr, kept, clean, rejectedFraction }
-//   beatFeatures(rr, durationS?) → { hr_mean, rmssd, sdnn, nBeats, nClean, coverage, rejectedFraction, hrValid, hrvValid }
-//   measurementFromRR(rr, meta) → Measurement   (every beat input uses this, the camera included)
-// Import it directly; this file only re-exports the types for convenience.
-export type { BeatFeatures, Cleaned } from '../signal/hrv';
+// web/src/signal/hrv.ts (inputs agent) — shared beat-to-beat feature extraction, used by every input.
+//
+//   export function cleanRR(rr: number[]): { rr: number[]; dropped: number }
+//     drops RR outside 300–2000 ms, then any interval differing > 20% from the median of its
+//     neighbours (up to 5 each side; amended by the inputs agent: 2 let two adjacent artefacts through).
+//   export function hrvFeatures(rr: number[]): HrvFeatures | null
+//     cleans first; null when fewer than MIN_BEATS intervals survive.
+
+export interface HrvFeatures {
+  /** 60000 / mean clean RR */
+  hr_mean: number;
+  /** ms */
+  rmssd: number;
+  /** ms */
+  sdnn: number;
+  /** clean intervals used */
+  n: number;
+  /** intervals dropped as artefacts */
+  dropped: number;
+}
+
+/** Amendment (app agent): fewer clean intervals than this and hrvFeatures returns null. */
+export const MIN_BEATS = 10;
