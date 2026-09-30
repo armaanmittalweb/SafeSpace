@@ -9,3 +9,6 @@ training/cache/
 training/**/*.npz
 *.pkl
 *.zip
+
+# Per-window derived data: publishing waits on the WESAD licence decision
+training/demo_sessions/

@@ -1,0 +1,2038 @@
+{
+ "name": "SafeSpace per-signal stress models v2",
+ "dataset": {
+  "name": "WESAD, wrist (Empatica E4) signals only",
+  "citation": "Schmidt, P., Reiss, A., Duerichen, R., Marberger, C., Van Laerhoven, K. \"Introducing WESAD, a Multimodal Dataset for Wearable Stress and Affect Detection\", ICMI 2018.",
+  "terms": "Scientific, non-commercial purposes, with credit.",
+  "subjects": [
+   "S2",
+   "S3",
+   "S4",
+   "S5",
+   "S6",
+   "S7",
+   "S8",
+   "S9",
+   "S10",
+   "S11",
+   "S13",
+   "S14",
+   "S15",
+   "S16",
+   "S17"
+  ],
+  "windows_per_subject": {
+   "S2": {
+    "baseline": 74,
+    "stress": 39,
+    "amusement": 22
+   },
+   "S3": {
+    "baseline": 74,
+    "stress": 41,
+    "amusement": 23
+   },
+   "S4": {
+    "baseline": 75,
+    "stress": 40,
+    "amusement": 22
+   },
+   "S5": {
+    "baseline": 78,
+    "stress": 40,
+    "amusement": 22
+   },
+   "S6": {
+    "baseline": 76,
+    "stress": 41,
+    "amusement": 22
+   },
+   "S7": {
+    "baseline": 77,
+    "stress": 40,
+    "amusement": 22
+   },
+   "S8": {
+    "baseline": 76,
+    "stress": 42,
+    "amusement": 22
+   },
+   "S9": {
+    "baseline": 76,
+    "stress": 40,
+    "amusement": 23
+   },
+   "S10": {
+    "baseline": 76,
+    "stress": 45,
+    "amusement": 22
+   },
+   "S11": {
+    "baseline": 77,
+    "stress": 43,
+    "amusement": 22
+   },
+   "S13": {
+    "baseline": 76,
+    "stress": 42,
+    "amusement": 23
+   },
+   "S14": {
+    "baseline": 77,
+    "stress": 42,
+    "amusement": 22
+   },
+   "S15": {
+    "baseline": 76,
+    "stress": 44,
+    "amusement": 23
+   },
+   "S16": {
+    "baseline": 77,
+    "stress": 43,
+    "amusement": 22
+   },
+   "S17": {
+    "baseline": 76,
+    "stress": 46,
+    "amusement": 22
+   }
+  }
+ },
+ "windowing": {
+  "window_s": 60.0,
+  "stride_s": 15.0,
+  "label_rule": ">= 80% of the window has one label in {1 baseline, 2 stress, 3 amusement}",
+  "target": "stress (2) = 1; baseline (1) and amusement (3) = 0"
+ },
+ "evaluation": "Leave-one-subject-out (LOSO); C tuned by inner LOSO on the training subjects (class-balanced log loss). Metrics = mean/std over held-out subjects.",
+ "calibration": {
+  "headline": "rest5",
+  "method": "per-subject z-score z = (x - rest_mean) / max(rest_sd, floor). rest_mean/rest_sd come from the windows lying entirely in the first 5 min of the subject's resting (WESAD baseline) segment; those windows are excluded from training and scoring. The browser demo does the same with a resting segment recorded first.",
+  "comparisons": {
+   "baseline": "rest statistics from the whole ~20 min baseline (its windows are also scored, so optimistic)",
+   "none": "raw features, global standardisation, no per-person calibration"
+  },
+  "sd_floor": {
+   "hr_mean": 1.0,
+   "rmssd": 3.0,
+   "sdnn": 3.0,
+   "eda_tonic": 0.05,
+   "eda_slope": 0.02,
+   "scr_count": 0.5,
+   "scr_amp": 0.01,
+   "temp_mean": 0.05,
+   "temp_slope": 0.02,
+   "pnn50": 2.0,
+   "acc_std": 0.005
+  },
+  "onnx_input": "CALIBRATED features, in the order listed per signal"
+ },
+ "preprocessing": {
+  "bvp": "64 Hz; band-pass 0.7-3.5 Hz (Butterworth order 3, zero-phase) per window; find_peaks (distance 0.33 s, prominence >= 0.3 x IQR); beat time = steepest upstroke within 0.25 s before each peak; IBIs kept if 0.33-1.5 s, within 30% of the window median, and for adjacent pairs changing > 25% the one farther from the median is dropped. HR valid if clean beats >= 40% of expected, HRV valid if >= 60% and >= 10 successive differences.",
+  "eda": "4 Hz; 1 Hz low-pass; tonic = 0.05 Hz low-pass; phasic = smoothed - tonic; SCR = phasic peak with prominence >= 0.02 uS, >= 1 s apart.",
+  "temp": "4 Hz; window mean and least-squares slope.",
+  "acc": "32 Hz; std of the 3-axis magnitude in g. Artifact flag only."
+ },
+ "score_mapping": "score = 2p - 1 in [-1, +1], p = probabilities[:, 1]. No other calibration.",
+ "fusion": {
+  "method": "p = sigmoid(mean of logit(p_s) over the signals valid in the window); score = 2p - 1",
+  "signals": [
+   "hr",
+   "hrv",
+   "eda",
+   "temp"
+  ],
+  "why": "Better than a stacked logistic regression (fitted without leakage) in every calibration mode, and has no parameters.",
+  "loso": {
+   "rest5": {
+    "summary": {
+     "balanced_accuracy": {
+      "mean": 0.9122022553682742,
+      "std": 0.11893529137955382,
+      "n_subjects": 15
+     },
+     "macro_f1": {
+      "mean": 0.899985026336483,
+      "std": 0.12282695117483905,
+      "n_subjects": 15
+     },
+     "roc_auc": {
+      "mean": 0.9972542179236893,
+      "std": 0.0066594594057529785,
+      "n_subjects": 15
+     }
+    },
+    "pooled_auc": 0.980064216351676,
+    "by_condition": {
+     "baseline": {
+      "n": 886,
+      "mean_score": -0.3595016911090025,
+      "frac_flagged": 0.022573363431151242
+     },
+     "stress": {
+      "n": 628,
+      "mean_score": 0.57255945265934,
+      "frac_flagged": 0.8980891719745223
+     },
+     "amusement": {
+      "n": 334,
+      "mean_score": -0.2463345021886567,
+      "frac_flagged": 0.19760479041916168
+     }
+    }
+   },
+   "baseline": {
+    "summary": {
+     "balanced_accuracy": {
+      "mean": 0.9537395837386011,
+      "std": 0.04412621606938393,
+      "n_subjects": 15
+     },
+     "macro_f1": {
+      "mean": 0.9445959752908498,
+      "std": 0.05157038826438903,
+      "n_subjects": 15
+     },
+     "roc_auc": {
+      "mean": 0.9946573788836616,
+      "std": 0.01131169453216118,
+      "n_subjects": 15
+     }
+    },
+    "pooled_auc": 0.9924452121342977,
+    "by_condition": {
+     "baseline": {
+      "n": 1141,
+      "mean_score": -0.4184101236800499,
+      "frac_flagged": 0.012269938650306749
+     },
+     "stress": {
+      "n": 628,
+      "mean_score": 0.661377088350905,
+      "frac_flagged": 0.9585987261146497
+     },
+     "amusement": {
+      "n": 334,
+      "mean_score": -0.30052664707334914,
+      "frac_flagged": 0.18263473053892215
+     }
+    }
+   },
+   "none": {
+    "summary": {
+     "balanced_accuracy": {
+      "mean": 0.8743194680045653,
+      "std": 0.11606165469965815,
+      "n_subjects": 15
+     },
+     "macro_f1": {
+      "mean": 0.8424287940981501,
+      "std": 0.15794057738626263,
+      "n_subjects": 15
+     },
+     "roc_auc": {
+      "mean": 0.9736812423675646,
+      "std": 0.03425351722072241,
+      "n_subjects": 15
+     }
+    },
+    "pooled_auc": 0.9495876066069309,
+    "by_condition": {
+     "baseline": {
+      "n": 1141,
+      "mean_score": -0.29576600106544276,
+      "frac_flagged": 0.18141980718667836
+     },
+     "stress": {
+      "n": 628,
+      "mean_score": 0.46280545853927046,
+      "frac_flagged": 0.928343949044586
+     },
+     "amusement": {
+      "n": 334,
+      "mean_score": -0.25314714083349515,
+      "frac_flagged": 0.16766467065868262
+     }
+    }
+   }
+  },
+  "loso_per_subject": {
+   "S2": {
+    "n": 118,
+    "n_pos": 39,
+    "n_neg": 79,
+    "balanced_accuracy": 0.6153846153846154,
+    "macro_f1": 0.6077127659574468,
+    "roc_auc": 0.9983771502758845
+   },
+   "S3": {
+    "n": 121,
+    "n_pos": 41,
+    "n_neg": 80,
+    "balanced_accuracy": 0.6585365853658537,
+    "macro_f1": 0.6662726556343578,
+    "roc_auc": 0.9789634146341464
+   },
+   "S4": {
+    "n": 120,
+    "n_pos": 40,
+    "n_neg": 80,
+    "balanced_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc": 1.0
+   },
+   "S5": {
+    "n": 123,
+    "n_pos": 40,
+    "n_neg": 83,
+    "balanced_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc": 1.0
+   },
+   "S6": {
+    "n": 122,
+    "n_pos": 41,
+    "n_neg": 81,
+    "balanced_accuracy": 0.9567901234567902,
+    "macro_f1": 0.9380935121420805,
+    "roc_auc": 1.0
+   },
+   "S7": {
+    "n": 122,
+    "n_pos": 40,
+    "n_neg": 82,
+    "balanced_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc": 1.0
+   },
+   "S8": {
+    "n": 123,
+    "n_pos": 42,
+    "n_neg": 81,
+    "balanced_accuracy": 0.9382716049382716,
+    "macro_f1": 0.9139137737961927,
+    "roc_auc": 1.0
+   },
+   "S9": {
+    "n": 122,
+    "n_pos": 40,
+    "n_neg": 82,
+    "balanced_accuracy": 0.9207317073170731,
+    "macro_f1": 0.8870611692658263,
+    "roc_auc": 1.0
+   },
+   "S10": {
+    "n": 126,
+    "n_pos": 45,
+    "n_neg": 81,
+    "balanced_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc": 1.0
+   },
+   "S11": {
+    "n": 125,
+    "n_pos": 43,
+    "n_neg": 82,
+    "balanced_accuracy": 1.0,
+    "macro_f1": 1.0,
+    "roc_auc": 1.0
+   },
+   "S13": {
+    "n": 124,
+    "n_pos": 42,
+    "n_neg": 82,
+    "balanced_accuracy": 0.975609756097561,
+    "macro_f1": 0.9647727272727273,
+    "roc_auc": 1.0
+   },
+   "S14": {
+    "n": 124,
+    "n_pos": 42,
+    "n_neg": 82,
+    "balanced_accuracy": 0.8231707317073171,
+    "macro_f1": 0.7642740085217962,
+    "roc_auc": 1.0
+   },
+   "S15": {
+    "n": 126,
+    "n_pos": 44,
+    "n_neg": 82,
+    "balanced_accuracy": 0.9817073170731707,
+    "macro_f1": 0.9741997133301481,
+    "roc_auc": 0.9997228381374723
+   },
+   "S16": {
+    "n": 125,
+    "n_pos": 43,
+    "n_neg": 82,
+    "balanced_accuracy": 0.8780487804878049,
+    "macro_f1": 0.8362159329140462,
+    "roc_auc": 1.0
+   },
+   "S17": {
+    "n": 127,
+    "n_pos": 46,
+    "n_neg": 81,
+    "balanced_accuracy": 0.9347826086956521,
+    "macro_f1": 0.9472591362126246,
+    "roc_auc": 0.9817498658078369
+   }
+  },
+  "stacked_lr_comparison": {
+   "baseline": {
+    "balanced_accuracy": {
+     "mean": 0.9123172022348136,
+     "std": 0.1316072920159628,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.9004564190314353,
+     "std": 0.1320001784565352,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.9762147892332762,
+     "std": 0.05813569340644202,
+     "n_subjects": 15
+    }
+   },
+   "none": {
+    "balanced_accuracy": {
+     "mean": 0.8698235339559552,
+     "std": 0.11066590796139888,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.8467668727548878,
+     "std": 0.14872933023953866,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.9775583743739102,
+     "std": 0.028821030142004107,
+     "n_subjects": 15
+    }
+   },
+   "rest5": {
+    "balanced_accuracy": {
+     "mean": 0.8727357723217568,
+     "std": 0.16497690357737368,
+     "n_subjects": 15
+    },
+    "macro_f1": {
+     "mean": 0.8594157232698031,
+     "std": 0.16963453238460643,
+     "n_subjects": 15
+    },
+    "roc_auc": {
+     "mean": 0.9743017256969831,
+     "std": 0.07771208900897236,
+     "n_subjects": 15
+    }
+   }
+  }
+ },
+ "hr_extraction_check_vs_chest_ecg": {
+  "windows": 2103,
+  "hr_valid_frac": 0.9591060389919163,
+  "hrv_valid_frac": 0.7379933428435568,
+  "hr_mae_bpm": 2.4434318378564606,
+  "hr_within_5bpm": 0.8765493306891423,
+  "hr_corr": 0.9600492749279874,
+  "rmssd_mae_ms": 22.950225906473825,
+  "rmssd_corr": 0.7770111255711616,
+  "sdnn_corr": 0.8242974216275689,
+  "by_condition": {
+   "baseline": {
+    "hr_valid_frac": 0.9842243645924628,
+    "hrv_valid_frac": 0.915863277826468
+   },
+   "stress": {
+    "hr_valid_frac": 0.8964968152866242,
+    "hrv_valid_frac": 0.3503184713375796
+   },
+   "amusement": {
+    "hr_valid_frac": 0.9910179640718563,
+    "hrv_valid_frac": 0.8592814371257484
+   }
+  }
+ },
+ "motion_confound": {
+  "auc_motion_for_stress_mean": 0.6987575985220678,
+  "auc_motion_for_stress_pooled": 0.6973777393932851,
+  "pointbiserial_r_pooled": 0.4425779764442036,
+  "acc_std_by_condition": {
+   "baseline": {
+    "mean_g": 0.029905200285666244,
+    "median_g": 0.02719162837032
+   },
+   "stress": {
+    "mean_g": 0.06866702600695605,
+    "median_g": 0.042853539818830576
+   },
+   "amusement": {
+    "mean_g": 0.016721058372166475,
+    "median_g": 0.010953145026589194
+   }
+  },
+  "acc_std_median_hrv_valid": 0.022119480235951977,
+  "acc_std_median_hrv_invalid": 0.05219360484754059,
+  "corr_acc_std_vs_beat_coverage": -0.5233097454932313,
+  "hrv_valid_frac_by_condition": {
+   "baseline": 0.915863277826468,
+   "stress": 0.3503184713375796,
+   "amusement": 0.8592814371257484
+  },
+  "hr_valid_frac_by_condition": {
+   "baseline": 0.9842243645924628,
+   "stress": 0.8964968152866242,
+   "amusement": 0.9910179640718563
+  }
+ },
+ "limitations": [
+  "15 WESAD subjects (12 male, 3 female, aged 24-35), one lab session each.",
+  "Stress is lab-induced (Trier Social Stress Test: public speech + mental arithmetic); it says nothing about everyday or chronic stress.",
+  "Non-stress = baseline (seated reading) and amusement (funny clips) only.",
+  "One wrist device (Empatica E4). Other sensors differ in noise, rate and units.",
+  "Needs a per-person 'calibrate at rest' segment; without it performance drops (loso.none).",
+  "Motion is a confound: wrist movement alone separates stress from non-stress with AUC ~0.70, and it is what degrades PPG quality during the TSST. It is reported and used as an artifact flag only, never as a stress input.",
+  "The WESAD protocol always starts with the baseline and for some subjects the stress test ran in a colder room (readme notes for S8, S16), so slow drifts can be confounded with condition.",
+  "Not a medical device."
+ ],
+ "signals": {
+  "hr": {
+   "strength": "primary",
+   "onnx": {
+    "file": "hr.onnx",
+    "bytes": 385,
+    "sha256": "a970305741bd146062239808a2973f9e952f8c3afd87fddf8eb2ce2c5e4b8095",
+    "opset": 17,
+    "inputs": [
+     "input"
+    ],
+    "input_type": "float32 [N, 1]",
+    "outputs": [
+     "label",
+     "probabilities"
+    ],
+    "probabilities_shape_on_training_set": [
+     1769,
+     2
+    ],
+    "parity_max_abs_diff_vs_sklearn": 1.0300927133499727e-07
+   },
+   "features": [
+    {
+     "name": "hr_mean",
+     "unit": "bpm",
+     "sd_floor": 1.0
+    }
+   ],
+   "model": "LogisticRegression(class_weight='balanced')",
+   "C": 0.003,
+   "coefficients": {
+    "hr_mean": 0.4196936956301051
+   },
+   "intercept": -1.3159280622486673,
+   "coefficient_meaning": "change in log-odds of stress per +1 resting SD of the feature",
+   "sign_check": {
+    "hr_mean": {
+     "coefficient": 0.4196936956301051,
+     "expected_sign": 1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    }
+   },
+   "n_windows": 1769,
+   "n_stress_windows": 563,
+   "n_subjects": 15,
+   "loso": {
+    "rest5": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.8124697430349807,
+       "std": 0.15990086413384125,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7921815975448734,
+       "std": 0.1759814641667847,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9392854285031351,
+       "std": 0.10575867941777284,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.8822671721322339,
+     "by_condition": {
+      "baseline": {
+       "n": 875,
+       "mean_score": -0.46641795975272765,
+       "frac_flagged": 0.08228571428571428
+      },
+      "stress": {
+       "n": 563,
+       "mean_score": 0.42276033913667727,
+       "frac_flagged": 0.7424511545293073
+      },
+      "amusement": {
+       "n": 331,
+       "mean_score": -0.35005274834241557,
+       "frac_flagged": 0.21450151057401812
+      }
+     },
+     "n_windows": 1769,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.8252638860055597,
+       "std": 0.14871144346050227,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.8035755389329663,
+       "std": 0.15842624218711399,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9096570038366221,
+       "std": 0.11396447172319366,
+       "n_subjects": 15
+      }
+     }
+    },
+    "baseline": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.858817132914138,
+       "std": 0.1252171116145337,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.8475320122612154,
+       "std": 0.11234758275652514,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9413735029736878,
+       "std": 0.09853430421833162,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.9136637828883878,
+     "by_condition": {
+      "baseline": {
+       "n": 1123,
+       "mean_score": -0.6040156864492723,
+       "frac_flagged": 0.04541406945681211
+      },
+      "stress": {
+       "n": 563,
+       "mean_score": 0.5340258289254538,
+       "frac_flagged": 0.8028419182948491
+      },
+      "amusement": {
+       "n": 331,
+       "mean_score": -0.3751492263877168,
+       "frac_flagged": 0.23867069486404835
+      }
+     },
+     "n_windows": 2017,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.8664167000528372,
+       "std": 0.10715422477304516,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.8516617601455045,
+       "std": 0.09447242730501715,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9312030507935719,
+       "std": 0.1032252813867539,
+       "n_subjects": 15
+      }
+     }
+    },
+    "none": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.7739117479560182,
+       "std": 0.1714038941502602,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7452324051939692,
+       "std": 0.21861536444091728,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9413735029736878,
+       "std": 0.09853430421833162,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.8927635163363882,
+     "by_condition": {
+      "baseline": {
+       "n": 1123,
+       "mean_score": -0.41983712945529206,
+       "frac_flagged": 0.1585040071237756
+      },
+      "stress": {
+       "n": 563,
+       "mean_score": 0.42762253376582304,
+       "frac_flagged": 0.7211367673179396
+      },
+      "amusement": {
+       "n": 331,
+       "mean_score": -0.40052344916053145,
+       "frac_flagged": 0.22658610271903323
+      }
+     },
+     "n_windows": 2017,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.7897226348085309,
+       "std": 0.16251812932938137,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7286641017317586,
+       "std": 0.2365005473190064,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.90201511469878,
+       "std": 0.13748232412440003,
+       "n_subjects": 15
+      }
+     }
+    }
+   },
+   "loso_per_subject": {
+    "S2": {
+     "n": 106,
+     "n_pos": 27,
+     "n_neg": 79,
+     "balanced_accuracy": 0.5,
+     "macro_f1": 0.42702702702702705,
+     "roc_auc": 0.9418659165494608
+    },
+    "S3": {
+     "n": 108,
+     "n_pos": 41,
+     "n_neg": 67,
+     "balanced_accuracy": 0.785220240262104,
+     "macro_f1": 0.8036363636363637,
+     "roc_auc": 0.9708773207135056
+    },
+    "S4": {
+     "n": 120,
+     "n_pos": 40,
+     "n_neg": 80,
+     "balanced_accuracy": 1.0,
+     "macro_f1": 1.0,
+     "roc_auc": 1.0
+    },
+    "S5": {
+     "n": 111,
+     "n_pos": 29,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9482758620689655,
+     "macro_f1": 0.963745236799129,
+     "roc_auc": 1.0
+    },
+    "S6": {
+     "n": 122,
+     "n_pos": 41,
+     "n_neg": 81,
+     "balanced_accuracy": 0.8711231556760012,
+     "macro_f1": 0.8578088578088578,
+     "roc_auc": 0.9388738331827763
+    },
+    "S7": {
+     "n": 113,
+     "n_pos": 31,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9939024390243902,
+     "macro_f1": 0.9889960074009154,
+     "roc_auc": 1.0
+    },
+    "S8": {
+     "n": 119,
+     "n_pos": 38,
+     "n_neg": 81,
+     "balanced_accuracy": 0.8395061728395061,
+     "macro_f1": 0.7769607843137255,
+     "roc_auc": 0.9905782975958415
+    },
+    "S9": {
+     "n": 122,
+     "n_pos": 40,
+     "n_neg": 82,
+     "balanced_accuracy": 0.6091463414634146,
+     "macro_f1": 0.6110117427482696,
+     "roc_auc": 0.6359756097560976
+    },
+    "S10": {
+     "n": 126,
+     "n_pos": 45,
+     "n_neg": 81,
+     "balanced_accuracy": 0.6222222222222222,
+     "macro_f1": 0.6096938775510204,
+     "roc_auc": 0.8968449931412894
+    },
+    "S11": {
+     "n": 104,
+     "n_pos": 22,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9318181818181819,
+     "macro_f1": 0.9544325982181978,
+     "roc_auc": 0.9817073170731707
+    },
+    "S13": {
+     "n": 120,
+     "n_pos": 38,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9634146341463414,
+     "macro_f1": 0.9444272923741897,
+     "roc_auc": 1.0
+    },
+    "S14": {
+     "n": 124,
+     "n_pos": 42,
+     "n_neg": 82,
+     "balanced_accuracy": 0.7073170731707317,
+     "macro_f1": 0.6112852664576802,
+     "roc_auc": 1.0
+    },
+    "S15": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.5985536018150879,
+     "macro_f1": 0.5809788334450723,
+     "roc_auc": 0.7325581395348838
+    },
+    "S16": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8597560975609756,
+     "macro_f1": 0.8129351291560935,
+     "roc_auc": 1.0
+    },
+    "S17": {
+     "n": 124,
+     "n_pos": 43,
+     "n_neg": 81,
+     "balanced_accuracy": 0.9567901234567902,
+     "macro_f1": 0.9397849462365591,
+     "roc_auc": 1.0
+    }
+   },
+   "subjects_below_chance": [],
+   "why_logistic_regression": "Depth-3 XGBoost was not clearly better in LOSO; LR is explainable and tiny.",
+   "limitations": [
+    "Wrist-PPG HR is corrupted by movement; windows with < 40% clean beats are dropped (HR available in 90% of stress vs 98% of baseline windows).",
+    "HR also rises with talking, standing and activity, all part of the TSST."
+   ]
+  },
+  "hrv": {
+   "strength": "weak",
+   "onnx": {
+    "file": "hrv.onnx",
+    "bytes": 395,
+    "sha256": "b72e1265e6dbc2f4661f0cd904add4c4930b4bb475d511942ed6fd82e2c69255",
+    "opset": 17,
+    "inputs": [
+     "input"
+    ],
+    "input_type": "float32 [N, 2]",
+    "outputs": [
+     "label",
+     "probabilities"
+    ],
+    "probabilities_shape_on_training_set": [
+     1327,
+     2
+    ],
+    "parity_max_abs_diff_vs_sklearn": 6.365674554142942e-08
+   },
+   "features": [
+    {
+     "name": "rmssd",
+     "unit": "ms",
+     "sd_floor": 3.0
+    },
+    {
+     "name": "sdnn",
+     "unit": "ms",
+     "sd_floor": 3.0
+    }
+   ],
+   "model": "LogisticRegression(class_weight='balanced')",
+   "C": 0.0003,
+   "coefficients": {
+    "rmssd": -0.05842185632280847,
+    "sdnn": -0.07182363412459139
+   },
+   "intercept": -0.11782534738686282,
+   "coefficient_meaning": "change in log-odds of stress per +1 resting SD of the feature",
+   "sign_check": {
+    "rmssd": {
+     "coefficient": -0.05842185632280847,
+     "expected_sign": -1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    },
+    "sdnn": {
+     "coefficient": -0.07182363412459139,
+     "expected_sign": -1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    }
+   },
+   "n_windows": 1327,
+   "n_stress_windows": 220,
+   "n_subjects": 15,
+   "loso": {
+    "rest5": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.560727694774179,
+       "std": 0.18220370361275348,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.5032758194386001,
+       "std": 0.13183318042574477,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.635064867153673,
+       "std": 0.2872133782619792,
+       "n_subjects": 12
+      }
+     },
+     "pooled_auc": 0.5464810708713148,
+     "by_condition": {
+      "baseline": {
+       "n": 820,
+       "mean_score": -0.055539553544841115,
+       "frac_flagged": 0.22682926829268293
+      },
+      "stress": {
+       "n": 220,
+       "mean_score": -0.07029011942928164,
+       "frac_flagged": 0.4590909090909091
+      },
+      "amusement": {
+       "n": 287,
+       "mean_score": -0.07492287531911669,
+       "frac_flagged": 0.32752613240418116
+      }
+     },
+     "n_windows": 1327,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.5796412401978891,
+       "std": 0.2014382046636707,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.5289522524485696,
+       "std": 0.17208679139628938,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.6038063041950067,
+       "std": 0.24699357537707184,
+       "n_subjects": 12
+      }
+     }
+    },
+    "baseline": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.6171512302107282,
+       "std": 0.20717524236818516,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.5089765104099928,
+       "std": 0.1359648871494573,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.6383217717580788,
+       "std": 0.2884329308709486,
+       "n_subjects": 12
+      }
+     },
+     "pooled_auc": 0.5520782145782146,
+     "by_condition": {
+      "baseline": {
+       "n": 1045,
+       "mean_score": -0.07009295404396777,
+       "frac_flagged": 0.25263157894736843
+      },
+      "stress": {
+       "n": 220,
+       "mean_score": -0.07198972305358382,
+       "frac_flagged": 0.4863636363636364
+      },
+      "amusement": {
+       "n": 287,
+       "mean_score": -0.10232116042969593,
+       "frac_flagged": 0.33797909407665505
+      }
+     },
+     "n_windows": 1552,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.5761874115404209,
+       "std": 0.1837562077888946,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.5309042022303629,
+       "std": 0.13779146466632708,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.559954315264013,
+       "std": 0.2801847472933681,
+       "n_subjects": 12
+      }
+     }
+    },
+    "none": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.5860980536437236,
+       "std": 0.18320539799505792,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.47323068809486063,
+       "std": 0.19067940187713653,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.6387637257896867,
+       "std": 0.28276535919002677,
+       "n_subjects": 12
+      }
+     },
+     "pooled_auc": 0.6741673491673492,
+     "by_condition": {
+      "baseline": {
+       "n": 1045,
+       "mean_score": -0.11040014482935225,
+       "frac_flagged": 0.36555023923444974
+      },
+      "stress": {
+       "n": 220,
+       "mean_score": 0.09172262546543675,
+       "frac_flagged": 0.6272727272727273
+      },
+      "amusement": {
+       "n": 287,
+       "mean_score": -0.0711486655887213,
+       "frac_flagged": 0.44947735191637633
+      }
+     },
+     "n_windows": 1552,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.537194616533359,
+       "std": 0.15098215223816805,
+       "n_subjects": 12
+      },
+      "macro_f1": {
+       "mean": 0.4577821492081009,
+       "std": 0.12936885572767112,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.6192990617176768,
+       "std": 0.207657843791408,
+       "n_subjects": 12
+      }
+     }
+    }
+   },
+   "loso_per_subject": {
+    "S2": {
+     "n": 73,
+     "n_pos": 0,
+     "n_neg": 73,
+     "balanced_accuracy": NaN,
+     "macro_f1": 0.416,
+     "roc_auc": NaN
+    },
+    "S3": {
+     "n": 57,
+     "n_pos": 21,
+     "n_neg": 36,
+     "balanced_accuracy": 0.8194444444444444,
+     "macro_f1": 0.7716486902927582,
+     "roc_auc": 0.9907407407407407
+    },
+    "S4": {
+     "n": 93,
+     "n_pos": 13,
+     "n_neg": 80,
+     "balanced_accuracy": 0.5413461538461539,
+     "macro_f1": 0.5248817407757805,
+     "roc_auc": 0.6442307692307693
+    },
+    "S5": {
+     "n": 79,
+     "n_pos": 0,
+     "n_neg": 79,
+     "balanced_accuracy": NaN,
+     "macro_f1": 0.44366197183098594,
+     "roc_auc": NaN
+    },
+    "S6": {
+     "n": 75,
+     "n_pos": 10,
+     "n_neg": 65,
+     "balanced_accuracy": 0.41923076923076924,
+     "macro_f1": 0.42915690866510536,
+     "roc_auc": 0.47846153846153844
+    },
+    "S7": {
+     "n": 80,
+     "n_pos": 0,
+     "n_neg": 80,
+     "balanced_accuracy": NaN,
+     "macro_f1": 0.4594594594594595,
+     "roc_auc": NaN
+    },
+    "S8": {
+     "n": 86,
+     "n_pos": 5,
+     "n_neg": 81,
+     "balanced_accuracy": 0.49382716049382713,
+     "macro_f1": 0.4819277108433735,
+     "roc_auc": 0.5333333333333333
+    },
+    "S9": {
+     "n": 105,
+     "n_pos": 26,
+     "n_neg": 79,
+     "balanced_accuracy": 0.31645569620253167,
+     "macro_f1": 0.3225806451612903,
+     "roc_auc": 0.22151898734177217
+    },
+    "S10": {
+     "n": 121,
+     "n_pos": 41,
+     "n_neg": 80,
+     "balanced_accuracy": 0.4875,
+     "macro_f1": 0.39195979899497485,
+     "roc_auc": 0.29878048780487804
+    },
+    "S11": {
+     "n": 82,
+     "n_pos": 1,
+     "n_neg": 81,
+     "balanced_accuracy": 0.41975308641975306,
+     "macro_f1": 0.4533333333333333,
+     "roc_auc": 0.7654320987654322
+    },
+    "S13": {
+     "n": 90,
+     "n_pos": 9,
+     "n_neg": 81,
+     "balanced_accuracy": 0.41975308641975306,
+     "macro_f1": 0.40993788819875776,
+     "roc_auc": 0.3580246913580247
+    },
+    "S14": {
+     "n": 107,
+     "n_pos": 25,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8719512195121951,
+     "macro_f1": 0.7786861026297646,
+     "roc_auc": 0.9736585365853658
+    },
+    "S15": {
+     "n": 96,
+     "n_pos": 24,
+     "n_neg": 72,
+     "balanced_accuracy": 0.4166666666666667,
+     "macro_f1": 0.4166666666666667,
+     "roc_auc": 0.3628472222222222
+    },
+    "S16": {
+     "n": 94,
+     "n_pos": 30,
+     "n_neg": 64,
+     "balanced_accuracy": 0.71875,
+     "macro_f1": 0.6168478260869565,
+     "roc_auc": 0.99375
+    },
+    "S17": {
+     "n": 89,
+     "n_pos": 15,
+     "n_neg": 74,
+     "balanced_accuracy": 0.8040540540540541,
+     "macro_f1": 0.6323885486397949,
+     "roc_auc": 1.0
+    }
+   },
+   "subjects_below_chance": [
+    "S10",
+    "S13",
+    "S15",
+    "S6",
+    "S9"
+   ],
+   "why_logistic_regression": "Depth-3 XGBoost was not clearly better in LOSO; LR is explainable and tiny.",
+   "limitations": [
+    "WEAK SIGNAL. Wrist-PPG RMSSD/SDNN are noisy (vs chest ECG: RMSSD r=0.78, biased ~+20 ms).",
+    "Only 35% of stress windows (vs 92% of baseline) have enough clean beats, so the pen is usually absent during stress and was trained on the cleanest stress windows; 3 subjects have no valid stress windows at all.",
+    "Adds nothing measurable to the fused score (fused with vs without HRV within 0.003).",
+    "pNN50 is reported but not modelled: its coefficient came out positive (backwards) alongside RMSSD and SDNN."
+   ],
+   "reported_not_modelled": {
+    "pnn50": {
+     "rmssd+sdnn+pnn50": {
+      "summary": {
+       "balanced_accuracy": {
+        "mean": 0.5585170307496861,
+        "std": 0.14822243393028056,
+        "n_subjects": 12
+       },
+       "macro_f1": {
+        "mean": 0.48916840956321095,
+        "std": 0.09580121084410738,
+        "n_subjects": 15
+       },
+       "roc_auc": {
+        "mean": 0.672760983246003,
+        "std": 0.17594703241411286,
+        "n_subjects": 12
+       }
+      },
+      "mean_coef_sign": [
+       -1.0,
+       -1.0,
+       1.0
+      ]
+     },
+     "rmssd+sdnn": {
+      "summary": {
+       "balanced_accuracy": {
+        "mean": 0.6171512302107283,
+        "std": 0.20717524236818516,
+        "n_subjects": 12
+       },
+       "macro_f1": {
+        "mean": 0.5089765104099928,
+        "std": 0.13596488714945726,
+        "n_subjects": 15
+       },
+       "roc_auc": {
+        "mean": 0.6383217717580788,
+        "std": 0.2884329308709486,
+        "n_subjects": 12
+       }
+      },
+      "mean_coef_sign": [
+       -1.0,
+       -1.0
+      ]
+     },
+     "rmssd": {
+      "summary": {
+       "balanced_accuracy": {
+        "mean": 0.5970616108598551,
+        "std": 0.21724173888568954,
+        "n_subjects": 12
+       },
+       "macro_f1": {
+        "mean": 0.48880150666494093,
+        "std": 0.1337711406272546,
+        "n_subjects": 15
+       },
+       "roc_auc": {
+        "mean": 0.619915071692956,
+        "std": 0.31422552684977034,
+        "n_subjects": 12
+       }
+      },
+      "mean_coef_sign": [
+       -1.0
+      ]
+     },
+     "sdnn": {
+      "summary": {
+       "balanced_accuracy": {
+        "mean": 0.6180872204589644,
+        "std": 0.18988809181923202,
+        "n_subjects": 12
+       },
+       "macro_f1": {
+        "mean": 0.5077826189354712,
+        "std": 0.1278299913795844,
+        "n_subjects": 15
+       },
+       "roc_auc": {
+        "mean": 0.6516811664235446,
+        "std": 0.25736038448035614,
+        "n_subjects": 12
+       }
+      },
+      "mean_coef_sign": [
+       -1.0
+      ]
+     }
+    }
+   }
+  },
+  "eda": {
+   "strength": "primary",
+   "onnx": {
+    "file": "eda.onnx",
+    "bytes": 415,
+    "sha256": "779336db42ede07b51341b9df34c6d22e20315d3b6182a3a1e1ce56f71948b11",
+    "opset": 17,
+    "inputs": [
+     "input"
+    ],
+    "input_type": "float32 [N, 4]",
+    "outputs": [
+     "label",
+     "probabilities"
+    ],
+    "probabilities_shape_on_training_set": [
+     1848,
+     2
+    ],
+    "parity_max_abs_diff_vs_sklearn": 1.0722966070630946e-07
+   },
+   "features": [
+    {
+     "name": "eda_tonic",
+     "unit": "uS",
+     "sd_floor": 0.05
+    },
+    {
+     "name": "eda_slope",
+     "unit": "uS/min",
+     "sd_floor": 0.02
+    },
+    {
+     "name": "scr_count",
+     "unit": "peaks/min",
+     "sd_floor": 0.5
+    },
+    {
+     "name": "scr_amp",
+     "unit": "uS",
+     "sd_floor": 0.01
+    }
+   ],
+   "model": "LogisticRegression(class_weight='balanced')",
+   "C": 0.003,
+   "coefficients": {
+    "eda_tonic": 0.17312547319722596,
+    "eda_slope": 0.16961898880443452,
+    "scr_count": 0.29795051255554483,
+    "scr_amp": 0.14501865612472625
+   },
+   "intercept": -1.123548295367242,
+   "coefficient_meaning": "change in log-odds of stress per +1 resting SD of the feature",
+   "sign_check": {
+    "eda_tonic": {
+     "coefficient": 0.17312547319722596,
+     "expected_sign": 1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    },
+    "eda_slope": {
+     "coefficient": 0.16961898880443452,
+     "expected_sign": 1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    },
+    "scr_count": {
+     "coefficient": 0.29795051255554483,
+     "expected_sign": 1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    },
+    "scr_amp": {
+     "coefficient": 0.14501865612472625,
+     "expected_sign": 1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    }
+   },
+   "n_windows": 1848,
+   "n_stress_windows": 628,
+   "n_subjects": 15,
+   "loso": {
+    "rest5": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.8391211681727374,
+       "std": 0.18727641762470723,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.8131034512898406,
+       "std": 0.21778119129218612,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9585929233649714,
+       "std": 0.08445207623249477,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.8648989767150463,
+     "by_condition": {
+      "baseline": {
+       "n": 886,
+       "mean_score": -0.5616001390574745,
+       "frac_flagged": 0.039503386004514675
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.4813900566587319,
+       "frac_flagged": 0.732484076433121
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": -0.44995896939015223,
+       "frac_flagged": 0.10179640718562874
+      }
+     },
+     "n_windows": 1848,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.7720690095849659,
+       "std": 0.17841279309559874,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7390471800326643,
+       "std": 0.19258098922101768,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9109179821445061,
+       "std": 0.13640414903964154,
+       "n_subjects": 15
+      }
+     }
+    },
+    "baseline": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.8413474139661797,
+       "std": 0.1796422645859931,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.8240331365274189,
+       "std": 0.18073368056513484,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9582720701620562,
+       "std": 0.07163602319469617,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.9032311346216129,
+     "by_condition": {
+      "baseline": {
+       "n": 1141,
+       "mean_score": -0.6052420181849508,
+       "frac_flagged": 0.035056967572304996
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.5475635003178136,
+       "frac_flagged": 0.7356687898089171
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": -0.48995801407262063,
+       "frac_flagged": 0.12574850299401197
+      }
+     },
+     "n_windows": 2103,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.8403028893108837,
+       "std": 0.16235689375263435,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.825912383239692,
+       "std": 0.15535194879090397,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.9371595880091447,
+       "std": 0.08659985141802141,
+       "n_subjects": 15
+      }
+     }
+    },
+    "none": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.8044125205452753,
+       "std": 0.1300118647508136,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7773398758782061,
+       "std": 0.1583790780868175,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.8740034750324787,
+       "std": 0.199903879588551,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.8398089171974522,
+     "by_condition": {
+      "baseline": {
+       "n": 1141,
+       "mean_score": -0.38609238678407665,
+       "frac_flagged": 0.1726555652936021
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.41769530546484457,
+       "frac_flagged": 0.7691082802547771
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": -0.4258983607240114,
+       "frac_flagged": 0.1377245508982036
+      }
+     },
+     "n_windows": 2103,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.7754617916868617,
+       "std": 0.1316466869838999,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.7520437342084869,
+       "std": 0.16569129017599285,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.8958578100277461,
+       "std": 0.1070867433741843,
+       "n_subjects": 15
+      }
+     }
+    }
+   },
+   "loso_per_subject": {
+    "S2": {
+     "n": 118,
+     "n_pos": 39,
+     "n_neg": 79,
+     "balanced_accuracy": 0.5,
+     "macro_f1": 0.4010152284263959,
+     "roc_auc": 0.9876663420967219
+    },
+    "S3": {
+     "n": 121,
+     "n_pos": 41,
+     "n_neg": 80,
+     "balanced_accuracy": 0.6585365853658537,
+     "macro_f1": 0.6662726556343578,
+     "roc_auc": 0.8179878048780488
+    },
+    "S4": {
+     "n": 120,
+     "n_pos": 40,
+     "n_neg": 80,
+     "balanced_accuracy": 0.99375,
+     "macro_f1": 0.9906825064057768,
+     "roc_auc": 1.0
+    },
+    "S5": {
+     "n": 123,
+     "n_pos": 40,
+     "n_neg": 83,
+     "balanced_accuracy": 1.0,
+     "macro_f1": 1.0,
+     "roc_auc": 1.0
+    },
+    "S6": {
+     "n": 122,
+     "n_pos": 41,
+     "n_neg": 81,
+     "balanced_accuracy": 0.9814814814814814,
+     "macro_f1": 0.9729189789123196,
+     "roc_auc": 1.0
+    },
+    "S7": {
+     "n": 122,
+     "n_pos": 40,
+     "n_neg": 82,
+     "balanced_accuracy": 1.0,
+     "macro_f1": 1.0,
+     "roc_auc": 1.0
+    },
+    "S8": {
+     "n": 123,
+     "n_pos": 42,
+     "n_neg": 81,
+     "balanced_accuracy": 0.9880952380952381,
+     "macro_f1": 0.9909084189518811,
+     "roc_auc": 1.0
+    },
+    "S9": {
+     "n": 122,
+     "n_pos": 40,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9268292682926829,
+     "macro_f1": 0.8953089244851258,
+     "roc_auc": 1.0
+    },
+    "S10": {
+     "n": 126,
+     "n_pos": 45,
+     "n_neg": 81,
+     "balanced_accuracy": 1.0,
+     "macro_f1": 1.0,
+     "roc_auc": 1.0
+    },
+    "S11": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8133862733976177,
+     "macro_f1": 0.83553904496556,
+     "roc_auc": 0.9707884288145208
+    },
+    "S13": {
+     "n": 124,
+     "n_pos": 42,
+     "n_neg": 82,
+     "balanced_accuracy": 0.9695121951219512,
+     "macro_f1": 0.9561868419192989,
+     "roc_auc": 0.9927409988385598
+    },
+    "S14": {
+     "n": 124,
+     "n_pos": 42,
+     "n_neg": 82,
+     "balanced_accuracy": 0.5357142857142857,
+     "macro_f1": 0.47060755336617405,
+     "roc_auc": 0.9105691056910569
+    },
+    "S15": {
+     "n": 126,
+     "n_pos": 44,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8841463414634146,
+     "macro_f1": 0.8456977118917177,
+     "roc_auc": 1.0
+    },
+    "S16": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8353658536585367,
+     "macro_f1": 0.781990827465926,
+     "roc_auc": 1.0
+    },
+    "S17": {
+     "n": 127,
+     "n_pos": 46,
+     "n_neg": 81,
+     "balanced_accuracy": 0.5,
+     "macro_f1": 0.3894230769230769,
+     "roc_auc": 0.6991411701556629
+    }
+   },
+   "subjects_below_chance": [],
+   "why_logistic_regression": "Depth-3 XGBoost was not clearly better in LOSO; LR is explainable and tiny.",
+   "limitations": [
+    "EDA level depends on skin contact, sweat, room temperature and time since the device was put on; calibration removes the person's offset, not drifts.",
+    "Fixed SCR threshold (0.02 uS); very dry skin may show no SCRs."
+   ]
+  },
+  "temp": {
+   "strength": "weak",
+   "onnx": {
+    "file": "temp.onnx",
+    "bytes": 395,
+    "sha256": "7bd9bc1179578036bcbdc69e6ea6d4066304ccc962d737ec65284d4e20b38709",
+    "opset": 17,
+    "inputs": [
+     "input"
+    ],
+    "input_type": "float32 [N, 2]",
+    "outputs": [
+     "label",
+     "probabilities"
+    ],
+    "probabilities_shape_on_training_set": [
+     1848,
+     2
+    ],
+    "parity_max_abs_diff_vs_sklearn": 8.22388208643332e-08
+   },
+   "features": [
+    {
+     "name": "temp_mean",
+     "unit": "degC",
+     "sd_floor": 0.05
+    },
+    {
+     "name": "temp_slope",
+     "unit": "degC/min",
+     "sd_floor": 0.02
+    }
+   ],
+   "model": "LogisticRegression(class_weight='balanced')",
+   "C": 0.001,
+   "coefficients": {
+    "temp_mean": -0.030019551226534127,
+    "temp_slope": -0.18930930603332446
+   },
+   "intercept": -0.28045152504069293,
+   "coefficient_meaning": "change in log-odds of stress per +1 resting SD of the feature",
+   "sign_check": {
+    "temp_mean": {
+     "coefficient": -0.030019551226534127,
+     "expected_sign": -1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    },
+    "temp_slope": {
+     "coefficient": -0.18930930603332446,
+     "expected_sign": -1,
+     "matches_physiology": true,
+     "loso_folds_matching": 1.0
+    }
+   },
+   "n_windows": 1848,
+   "n_stress_windows": 628,
+   "n_subjects": 15,
+   "loso": {
+    "rest5": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.6499482697173244,
+       "std": 0.20164442835799418,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.597102263746373,
+       "std": 0.22749384009730345,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.765293689828669,
+       "std": 0.2659661425959758,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.6871358462984234,
+     "by_condition": {
+      "baseline": {
+       "n": 886,
+       "mean_score": -0.1821863190576625,
+       "frac_flagged": 0.1670428893905192
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.08954138732032065,
+       "frac_flagged": 0.5652866242038217
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": 0.05439009997278365,
+       "frac_flagged": 0.5149700598802395
+      }
+     },
+     "n_windows": 1848,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.6541085768371112,
+       "std": 0.17967356732973197,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.6185953944213388,
+       "std": 0.18549602411440733,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.6931088856080473,
+       "std": 0.25214320209079943,
+       "n_subjects": 15
+      }
+     }
+    },
+    "baseline": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.674452555108443,
+       "std": 0.18589817200371436,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.62839573610601,
+       "std": 0.20227416316726526,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.7590022885493153,
+       "std": 0.26725347883068856,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.7322012307027961,
+     "by_condition": {
+      "baseline": {
+       "n": 1141,
+       "mean_score": -0.18441096863730372,
+       "frac_flagged": 0.051709027169149865
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.03967346044338714,
+       "frac_flagged": 0.48089171974522293
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": 0.01792049584120713,
+       "frac_flagged": 0.41317365269461076
+      }
+     },
+     "n_windows": 2103,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.7057826768288022,
+       "std": 0.16298139449283452,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.6717691478550479,
+       "std": 0.1628387010366312,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.7668399531229543,
+       "std": 0.19510425142578589,
+       "n_subjects": 15
+      }
+     }
+    },
+    "none": {
+     "summary": {
+      "balanced_accuracy": {
+       "mean": 0.7455129286393694,
+       "std": 0.19281468612220565,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.701792726943689,
+       "std": 0.21657670368359502,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.7829589294434871,
+       "std": 0.23029614907721166,
+       "n_subjects": 15
+      }
+     },
+     "pooled_auc": 0.7522195832883515,
+     "by_condition": {
+      "baseline": {
+       "n": 1141,
+       "mean_score": -0.1897464730708367,
+       "frac_flagged": 0.24539877300613497
+      },
+      "stress": {
+       "n": 628,
+       "mean_score": 0.16201431235590077,
+       "frac_flagged": 0.7945859872611465
+      },
+      "amusement": {
+       "n": 334,
+       "mean_score": 0.03742649428547693,
+       "frac_flagged": 0.5089820359281437
+      }
+     },
+     "n_windows": 2103,
+     "gradient_boosting_summary": {
+      "balanced_accuracy": {
+       "mean": 0.6898775507315515,
+       "std": 0.22725233336953762,
+       "n_subjects": 15
+      },
+      "macro_f1": {
+       "mean": 0.6465512567236806,
+       "std": 0.25959172714047557,
+       "n_subjects": 15
+      },
+      "roc_auc": {
+       "mean": 0.758109630322469,
+       "std": 0.24508900478838896,
+       "n_subjects": 15
+      }
+     }
+    }
+   },
+   "loso_per_subject": {
+    "S2": {
+     "n": 118,
+     "n_pos": 39,
+     "n_neg": 79,
+     "balanced_accuracy": 0.7784810126582278,
+     "macro_f1": 0.7028563205986043,
+     "roc_auc": 0.993833171048361
+    },
+    "S3": {
+     "n": 121,
+     "n_pos": 41,
+     "n_neg": 80,
+     "balanced_accuracy": 0.6367378048780488,
+     "macro_f1": 0.6321097515758249,
+     "roc_auc": 0.7125
+    },
+    "S4": {
+     "n": 120,
+     "n_pos": 40,
+     "n_neg": 80,
+     "balanced_accuracy": 0.96875,
+     "macro_f1": 0.9629515282494596,
+     "roc_auc": 0.9971875
+    },
+    "S5": {
+     "n": 123,
+     "n_pos": 40,
+     "n_neg": 83,
+     "balanced_accuracy": 0.5,
+     "macro_f1": 0.4029126213592233,
+     "roc_auc": 0.9939759036144579
+    },
+    "S6": {
+     "n": 122,
+     "n_pos": 41,
+     "n_neg": 81,
+     "balanced_accuracy": 0.654320987654321,
+     "macro_f1": 0.532950505879136,
+     "roc_auc": 0.9987955435109908
+    },
+    "S7": {
+     "n": 122,
+     "n_pos": 40,
+     "n_neg": 82,
+     "balanced_accuracy": 0.4213414634146342,
+     "macro_f1": 0.38524965643609715,
+     "roc_auc": 0.7435975609756098
+    },
+    "S8": {
+     "n": 123,
+     "n_pos": 42,
+     "n_neg": 81,
+     "balanced_accuracy": 0.519400352733686,
+     "macro_f1": 0.33418803418803417,
+     "roc_auc": 0.7445620223398001
+    },
+    "S9": {
+     "n": 122,
+     "n_pos": 40,
+     "n_neg": 82,
+     "balanced_accuracy": 0.4344512195121951,
+     "macro_f1": 0.4184542049710589,
+     "roc_auc": 0.7359756097560974
+    },
+    "S10": {
+     "n": 126,
+     "n_pos": 45,
+     "n_neg": 81,
+     "balanced_accuracy": 0.9259259259259258,
+     "macro_f1": 0.9301552106430155,
+     "roc_auc": 0.9838134430727024
+    },
+    "S11": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.8658536585365854,
+     "macro_f1": 0.8206833594157538,
+     "roc_auc": 0.8658536585365854
+    },
+    "S13": {
+     "n": 124,
+     "n_pos": 42,
+     "n_neg": 82,
+     "balanced_accuracy": 1.0,
+     "macro_f1": 1.0,
+     "roc_auc": 1.0
+    },
+    "S14": {
+     "n": 124,
+     "n_pos": 42,
+     "n_neg": 82,
+     "balanced_accuracy": 0.4024390243902439,
+     "macro_f1": 0.3473684210526316,
+     "roc_auc": 0.005807200929152148
+    },
+    "S15": {
+     "n": 126,
+     "n_pos": 44,
+     "n_neg": 82,
+     "balanced_accuracy": 0.4941796008869179,
+     "macro_f1": 0.47132867132867134,
+     "roc_auc": 0.5460088691796009
+    },
+    "S16": {
+     "n": 125,
+     "n_pos": 43,
+     "n_neg": 82,
+     "balanced_accuracy": 0.5,
+     "macro_f1": 0.3961352657004831,
+     "roc_auc": 0.44412932501418034
+    },
+    "S17": {
+     "n": 127,
+     "n_pos": 46,
+     "n_neg": 81,
+     "balanced_accuracy": 0.6473429951690821,
+     "macro_f1": 0.6191904047976011,
+     "roc_auc": 0.713365539452496
+    }
+   },
+   "subjects_below_chance": [
+    "S14",
+    "S16"
+   ],
+   "why_logistic_regression": "Depth-3 XGBoost was not clearly better in LOSO; LR is explainable and tiny.",
+   "limitations": [
+    "WEAK SIGNAL. Slow, and driven by room temperature, clothing and time since the device was put on; it flags many amusement windows as stress and is backwards for some subjects (see subjects_below_chance). It tracks 'not at rest / different room' as much as stress."
+   ]
+  }
+ }
+}
