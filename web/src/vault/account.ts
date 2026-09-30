@@ -6,8 +6,9 @@
  *   interface Account { me: Me; dataKey: CryptoKey }       dataKey is non-extractable
  *   signUp(email, password, api?): Promise<{ account, recoveryKey }>   show recoveryKey once, make the user keep it
  *   signIn(email, password, api?): Promise<Account>                   VaultError 401 on a wrong password
- *   resume(api?): Promise<Account | { me: MeWithKey; dataKey: null } | null>
- *       on load: null = signed out; dataKey null = signed in but this device lost the key → unlock()
+ *   resume(api?): Promise<(Account & { offline?: true }) | { me: MeWithKey; dataKey: null } | null>
+ *       on load: null = signed out; dataKey null = signed in but this device lost the key → unlock();
+ *       offline: the account saved on this device, unchecked (sync once back online)
  *   unlock(me, password, api?): Promise<Account>                      re-derives the key without a new session
  *   signOut(api?): Promise<void>                                      also works offline; wipes local data
  *   recoverAccount(email, recoveryKey, newPassword, api?): Promise<Account>   WrongRecoveryKey if it does not fit
@@ -15,11 +16,11 @@
  *   regenerateRecoveryKey(password, api?): Promise<string>            the old recovery key stops working
  *   deleteAccount(password, api?): Promise<void>
  */
-import { vault, type VaultClient } from './client';
+import { vault, VaultError, type VaultClient } from './client';
 import {
   derivePasswordKeys, deriveRecoveryKeys, newDataKey, newRecoveryKey, newSalt, unwrapDataKey, wrapDataKey,
 } from './crypto';
-import { clearLocalVault, loadDataKey, saveDataKey } from './session';
+import { clearLocalVault, loadDataKey, loadSaved, saveDataKey } from './session';
 import type { Me, MeWithKey } from './types';
 
 export interface Account { me: Me; dataKey: CryptoKey }
@@ -38,7 +39,10 @@ async function passwordKeys(email: string, password: string, api: VaultClient) {
 }
 
 async function keep(me: Me, dataKey: CryptoKey): Promise<Account> {
-  await saveDataKey(me.user.id, dataKey).catch(() => undefined); // storage blocked: works until reload
+  // Another account's records on this device: they go before this one's arrive.
+  const saved = await loadSaved();
+  if (saved && saved.user.id !== me.user.id) await clearLocalVault();
+  await saveDataKey(me.user, dataKey).catch(() => undefined); // storage blocked: works until reload
   return { me, dataKey };
 }
 
@@ -64,8 +68,15 @@ export async function signIn(email: string, password: string, api: VaultClient =
   return keep({ user: me.user }, await unwrapDataKey(me.wrappedByPassword, wrapKey));
 }
 
-export async function resume(api: VaultClient = vault): Promise<Account | { me: MeWithKey; dataKey: null } | null> {
-  const me = await api.me();
+export async function resume(api: VaultClient = vault): Promise<(Account & { offline?: true }) | { me: MeWithKey; dataKey: null } | null> {
+  let me: MeWithKey | null;
+  try {
+    me = await api.me();
+  } catch (e) {
+    if (!(e instanceof VaultError) || e.code !== 'offline') throw e;
+    const saved = await loadSaved(); // offline: trust this device's saved session until we can check
+    return saved ? { me: { user: saved.user }, dataKey: saved.key, offline: true } : null;
+  }
   if (!me) {
     await clearLocalVault();
     return null;
