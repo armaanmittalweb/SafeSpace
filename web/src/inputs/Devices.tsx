@@ -115,6 +115,15 @@ const DETAIL: Partial<Record<InputSource, string>> = {
 };
 const GIVES: Record<string, string> = { hr: 'Heart rate', hrv: 'HRV', eda: 'Skin conductance', temp: 'Skin temperature' };
 
+function Meta(p: { gives: string; where?: string }) {
+  return (
+    <dl class="dv-row-meta">
+      <div><dt>Gives</dt><dd>{p.gives}</dd></div>
+      {p.where && <div><dt>Works on</dt><dd>{p.where}</dd></div>}
+    </dl>
+  );
+}
+
 export type ConnectState = { kind: 'idle' } | { kind: 'connecting' } | { kind: 'error'; name: string; message: string };
 
 export function BluetoothRow(p: { provider: LiveInput; avail: Avail; state: ConnectState; connected: boolean; onConnect: () => void }) {
@@ -122,9 +131,9 @@ export function BluetoothRow(p: { provider: LiveInput; avail: Avail; state: Conn
   return (
     <li class="dv-row">
       <div class="dv-row-main">
-        <h4 class="dv-row-name">{p.provider.label}</h4>
+        <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{DETAIL[p.provider.id]}</p>
-        <p class="dv-row-meta"><span>{p.provider.gives.map((g) => GIVES[g]).join(', ')}</span><span>{WORKS_ON[p.provider.id]}</span></p>
+        <Meta gives={p.provider.gives.map((g) => GIVES[g]).join(', ')} where={WORKS_ON[p.provider.id]} />
         {blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}
         {p.state.kind === 'connecting' && <p class="dv-status" role="status">Choose your device in the browser's list. Straps wake up when worn with damp electrodes.</p>}
         {p.state.kind === 'error' && p.state.name !== 'AbortError' && (
@@ -133,7 +142,7 @@ export function BluetoothRow(p: { provider: LiveInput; avail: Avail; state: Conn
       </div>
       <div class="dv-row-act">
         {!blocked && (
-          <button type="button" class="ax-btn" onClick={p.onConnect} disabled={p.state.kind === 'connecting' || p.avail == null}>
+          <button type="button" class={`ax-btn${p.connected ? '' : ' primary'}`} onClick={p.onConnect} disabled={p.state.kind === 'connecting' || p.avail == null}>
             {p.state.kind === 'connecting' ? 'Connecting…' : p.connected ? 'Switch device' : p.state.kind === 'error' ? 'Try again' : 'Connect'}
           </button>
         )}
@@ -147,9 +156,9 @@ export function CameraRow(p: { provider: LiveInput; avail: Avail }) {
   return (
     <li class="dv-row">
       <div class="dv-row-main">
-        <h4 class="dv-row-name">{p.provider.label}</h4>
+        <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{DETAIL.camera}</p>
-        <p class="dv-row-meta"><span>Heart rate, HRV (noisier than a strap)</span><span>{WORKS_ON.camera}</span></p>
+        <Meta gives="Heart rate, HRV (noisier than a strap)" where={WORKS_ON.camera} />
         {blocked && <p class="dv-reason" role="note">{(p.avail as { reason: string }).reason}</p>}
       </div>
       <div class="dv-row-act"><span class="dv-inline">{blocked ? '' : 'Used in a check-in'}</span></div>
@@ -167,9 +176,9 @@ export function ImportRow(p: { provider: FileInputInfo; state: ImportState; onFi
   return (
     <li class="dv-row">
       <div class="dv-row-main">
-        <h4 class="dv-row-name">{p.provider.label}</h4>
+        <h3 class="dv-row-name">{p.provider.label}</h3>
         <p class="dv-row-detail">{p.provider.how}</p>
-        <p class="dv-row-meta"><span>{p.provider.brings}</span></p>
+        <Meta gives={p.provider.brings} where="Any browser" />
         {p.state.kind === 'reading' && (
           <div class="dv-progress" role="progressbar" aria-label={`Reading ${p.state.fileName}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.state.fraction * 100)}>
             <i style={{ transform: `scaleX(${p.state.fraction})` }} />
@@ -239,7 +248,7 @@ export function DevicesPanel(p: DevicesPanelProps) {
   return (
     <div class="ax dv">
       <section aria-labelledby="dv-connected">
-        <h3 id="dv-connected" class="ax-kicker dv-h">Connected</h3>
+        <h2 id="dv-connected" class="ax-kicker dv-h">Connected</h2>
         {live ? (
           <LiveCard conn={live} onDisconnect={() => void liveStore.disconnect()} onReconnect={bt ? connect : undefined} />
         ) : (
@@ -251,7 +260,7 @@ export function DevicesPanel(p: DevicesPanelProps) {
       </section>
 
       <section aria-labelledby="dv-add">
-        <h3 id="dv-add" class="ax-kicker dv-h">Add a device</h3>
+        <h2 id="dv-add" class="ax-kicker dv-h">Add a device</h2>
         <ul class="dv-list">
           {bt && <BluetoothRow provider={bt} avail={btAvail} state={cs} connected={!!live} onConnect={connect} />}
           {cam && <CameraRow provider={cam} avail={camAvail} />}
@@ -260,7 +269,7 @@ export function DevicesPanel(p: DevicesPanelProps) {
 
       {files.length > 0 && (
         <section aria-labelledby="dv-import">
-          <h3 id="dv-import" class="ax-kicker dv-h">Import a file</h3>
+          <h2 id="dv-import" class="ax-kicker dv-h">Import a file</h2>
           <p class="ax-small dv-sub">Files are read on this device and never uploaded. Only one-minute summaries are kept.</p>
           <ul class="dv-list">
             {files.map((f) => <ImportRow key={f.id} provider={f} state={imp[f.id] ?? { kind: 'idle' }} onFile={(file) => onFile(f, file)} />)}

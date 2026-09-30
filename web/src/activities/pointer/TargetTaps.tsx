@@ -62,15 +62,15 @@ function Run(p: { seed: number; durationS: number; embedded?: boolean; onEnd: (m
         <svg viewBox="0 0 100 100" aria-hidden="true">
           {started ? (
             <g>
-              <circle cx={t.x * 100} cy={t.y * 100} r={t.r * 100} fill="var(--bg)" stroke="var(--ink)" stroke-width="0.7" />
-              <circle cx={t.x * 100} cy={t.y * 100} r={t.r * 50} fill="none" stroke="var(--ink)" stroke-width="0.35" />
-              <line x1={t.x * 100 - 1.4} y1={t.y * 100} x2={t.x * 100 + 1.4} y2={t.y * 100} stroke="var(--ink)" stroke-width="0.35" />
-              <line x1={t.x * 100} y1={t.y * 100 - 1.4} x2={t.x * 100} y2={t.y * 100 + 1.4} stroke="var(--ink)" stroke-width="0.35" />
+              <circle cx={t.x * 100} cy={t.y * 100} r={t.r * 100} class="tt-outer" />
+              <circle cx={t.x * 100} cy={t.y * 100} r={t.r * 50} class="tt-inner" />
+              <line x1={t.x * 100 - 1.4} y1={t.y * 100} x2={t.x * 100 + 1.4} y2={t.y * 100} class="tt-cross" />
+              <line x1={t.x * 100} y1={t.y * 100 - 1.4} x2={t.x * 100} y2={t.y * 100 + 1.4} class="tt-cross" />
             </g>
           ) : (
             <g>
-              <circle cx="50" cy="50" r="9" fill="var(--ink)" />
-              <text x="50" y="51.4" text-anchor="middle" font-size="3.6" font-family="var(--sans)" font-weight="600" fill="var(--bg)">Start</text>
+              <circle cx="50" cy="50" r="9" class="tt-startbtn" />
+              <text x="50" y="51.3" text-anchor="middle" class="tt-start">Start</text>
             </g>
           )}
         </svg>

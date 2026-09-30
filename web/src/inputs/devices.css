@@ -3,7 +3,7 @@
 .dv-sub { margin: -4px 2px 8px; }
 .dv-foot { padding: 0 2px; max-width: 64ch; }
 
-.dv-empty { border: 1px dashed var(--line); border-radius: var(--ax-r); padding: 18px; display: flex; flex-direction: column; gap: 4px; }
+.dv-empty { background: var(--ax-card); border: 1px solid var(--ax-edge); border-radius: var(--ax-r); padding: 18px; display: flex; flex-direction: column; gap: 4px; }
 .dv-empty p:first-child { font-weight: 600; }
 
 .dv-live { gap: 14px; }
@@ -27,8 +27,10 @@
 .dv-row-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .dv-row-name { font-size: 16px; font-weight: 600; }
 .dv-row-detail { font-size: 14px; color: var(--ink-2); line-height: 1.45; max-width: 62ch; }
-.dv-row-meta { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 13px; color: var(--muted); }
-.dv-row-meta span + span::before { content: '\00b7'; margin-right: 14px; }
+.dv-row-meta { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 4px 0 0; font-size: 13px; line-height: 1.45; }
+.dv-row-meta > div { display: contents; }
+.dv-row-meta dt { font: 500 10.5px/1.9 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.dv-row-meta dd { color: var(--ink-2); }
 .dv-row-act { padding-top: 2px; }
 .dv-inline { font-size: 13px; color: var(--muted); white-space: nowrap; display: inline-block; padding-top: 12px; }
 .dv-reason { margin-top: 6px; font-size: 14px; line-height: 1.45; color: var(--ink); background: var(--bg); border: 1px solid var(--ax-edge); border-left: 3px solid var(--ax-fair); border-radius: 6px; padding: 8px 10px; max-width: 62ch; }
@@ -41,8 +43,8 @@
 .dv-file:focus-visible + label { outline: 2px solid var(--focus); outline-offset: 2px; }
 .dv-row-act label.disabled { opacity: 0.45; pointer-events: none; }
 @media (max-width: 520px) {
-  .dv-row { grid-template-columns: 1fr; }
-  .dv-row-act { padding-top: 6px; }
-  .dv-inline { padding-top: 0; }
+  .dv-row { gap: 8px 12px; }
+  .dv-row .ax-btn { min-height: 40px; padding: 0 14px; font-size: 14px; }
+  .dv-inline { padding-top: 2px; white-space: normal; text-align: right; max-width: 9ch; }
   .dv-bpm span { font-size: 42px; }
 }

@@ -57,7 +57,7 @@ export function ActivityPicker(p: ActivityPickerProps) {
         return (
           <section class="ap-group" key={job} aria-labelledby={`ap-${job}`}>
             <div class="ap-group-head">
-              <h3 id={`ap-${job}`} class="ax-kicker">{JOB_LABEL[job]}</h3>
+              <h2 id={`ap-${job}`} class="ax-kicker">{JOB_LABEL[job]}</h2>
               <p class="ax-small">{JOB_NOTE[job]}</p>
             </div>
             <ul class="ap-list">

@@ -92,9 +92,9 @@
 .ax-note { font-size: 13px; color: var(--muted); line-height: 1.45; border-left: 2px solid var(--rule); padding-left: 10px; }
 
 /* quality dot */
-.ax-q { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-.ax-q::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
-.ax-q.good { color: var(--ax-good); } .ax-q.fair { color: var(--ax-fair); } .ax-q.poor { color: var(--ax-poor); }
+.ax-q { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--ink); }
+.ax-q::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ax-good); }
+.ax-q.fair::before { background: var(--ax-fair); } .ax-q.poor::before { background: var(--ax-poor); }
 
 @media (prefers-reduced-motion: reduce) { .ax *, .ax *::before, .ax *::after { transition: none !important; animation: none !important; } }
 
@@ -102,3 +102,12 @@
 .ax-embedded { display: flex; flex-direction: column; gap: 14px; }
 .ax-embed-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 20px; }
 .ax-embed-clock { font-size: 14px; color: var(--muted); }
+.tt-start { font: 600 3.6px var(--sans); fill: var(--bg); }
+.fd-trail { fill: none; stroke: var(--ink); stroke-opacity: 0.35; stroke-width: 1.5px; stroke-linejoin: round; }
+.fd-ring { fill: none; stroke: var(--ink); stroke-width: 0.6; }
+.fd-ring.near { fill: var(--sel); }
+.fd-dot, .tt-startbtn { fill: var(--ink); }
+.fd-halo { fill: none; stroke: var(--ink); stroke-width: 0.3; stroke-dasharray: 1.2 1.2; }
+.tt-outer { fill: var(--bg); stroke: var(--ink); stroke-width: 0.7; }
+.tt-inner { fill: none; stroke: var(--ink); stroke-width: 0.35; }
+.tt-cross { stroke: var(--ink); stroke-width: 0.35; }

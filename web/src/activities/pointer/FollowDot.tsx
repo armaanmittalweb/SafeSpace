@@ -61,12 +61,12 @@ function Run(p: { seed: number; durationS: number; embedded?: boolean; onEnd: (m
       <div ref={stage} class="ax-stage square" onPointerMove={onMove} onPointerDown={onMove} onPointerLeave={onLeave}
         role="application" aria-label="Tracking box. Keep the pointer on the moving dot.">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {pts && <polyline points={pts} fill="none" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="0.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" />}
+          {pts && <polyline points={pts} class="fd-trail" vector-effect="non-scaling-stroke" />}
         </svg>
         <svg viewBox="0 0 100 100" aria-hidden="true">
-          <circle cx={d.x * 100} cy={d.y * 100} r={ON_TARGET * 100} fill={near ? 'var(--sel)' : 'none'} stroke="var(--ink)" stroke-width="0.6" />
-          <circle cx={d.x * 100} cy={d.y * 100} r="1.1" fill="var(--ink)" />
-          {!started && !reduced && <circle cx={d.x * 100} cy={d.y * 100} r={ON_TARGET * 100 + 3} fill="none" stroke="var(--ink)" stroke-width="0.3" stroke-dasharray="1.2 1.2" />}
+          <circle cx={d.x * 100} cy={d.y * 100} r={ON_TARGET * 100} class={`fd-ring${near ? ' near' : ''}`} />
+          <circle cx={d.x * 100} cy={d.y * 100} r="1.1" class="fd-dot" />
+          {!started && !reduced && <circle cx={d.x * 100} cy={d.y * 100} r={ON_TARGET * 100 + 3} class="fd-halo" />}
         </svg>
       </div>
     </RunFrame>

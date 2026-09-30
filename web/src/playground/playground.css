@@ -1,0 +1,5 @@
+.pg { max-width: 720px; margin: 0 auto; padding: 16px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+.pg-crumb { margin: 0; font: 500 11px/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.pg-crumb a { color: inherit; }
+.pg-list { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0 18px; font-size: 14px; }
+@media (min-width: 900px) { .pg { padding-top: 32px; } }
