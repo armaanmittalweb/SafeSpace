@@ -64,10 +64,11 @@ const scenarios = [
     await p.goto(`${BASE}/?${F}&seed=sample&offline=1`); await p.waitForSelector('.today'); await wait(p, 1100); await shot('today-offline');
   }],
   ['checkin', async (p, shot) => {
-    await p.goto(`${BASE}/check-in?${F}&seed=sample`); await p.waitForSelector('.option-list'); await wait(p); await shot('checkin-1-choose');
+    await p.goto(`${BASE}/check-in?fake=1&dur=20&seed=sample`); await p.waitForSelector('.option-list'); await wait(p); await shot('checkin-1-choose');
     await p.click('button.option:has-text("Phone camera")'); await p.waitForSelector('.prepare'); await wait(p); await shot('checkin-2-prepare');
-    await p.click('button:has-text("Start the 60-second")'); await p.waitForSelector('.measuring'); await wait(p, 5200); await shot('checkin-3-measuring');
-    await p.waitForSelector('.feel-list', { timeout: 30000 }); await wait(p); await shot('checkin-4-feeling');
+    await p.click('button:has-text("Start the 60-second")'); await p.waitForSelector('.measuring'); await wait(p, 2500); await shot('checkin-3-getting-ready');
+    await p.waitForSelector('.flow-title:has-text("Measuring")', { timeout: 20000 }); await wait(p, 5000); await shot('checkin-3-measuring');
+    await p.waitForSelector('.feel-list', { timeout: 40000 }); await wait(p); await shot('checkin-4-feeling');
     await p.click('.feel:has-text("Tense") >> nth=0'); await p.waitForSelector('.tag-add'); await p.click('.chip:has-text("deadline")'); await wait(p); await shot('checkin-5-tags');
     await p.click('button:has-text("See the result")'); await p.waitForSelector('.result'); await wait(p, 1100); await shot('checkin-6-result'); await shot('checkin-6-result-full', { full: true });
     await p.click('button:has-text("Save check-in")'); await p.waitForSelector('.today'); await wait(p, 300); await shot('checkin-7-saved');
@@ -98,7 +99,7 @@ const scenarios = [
   ['settings', async (p, shot) => { await p.goto(`${BASE}/settings?${F}&seed=sample`); await p.waitForSelector('.settings'); await wait(p, 600); await shot('settings'); await shot('settings-full', { full: true }); }],
   ['misc', async (p, shot) => {
     await p.goto(`${BASE}/nope?${F}&seed=sample`); await p.waitForSelector('.not-found'); await shot('404');
-    await p.goto(`${BASE}/lab/pulse?${F}&seed=out`); await p.click('button:has-text("Start the camera")'); await wait(p, 6000); await shot('lab-pulse'); await shot('lab-pulse-full', { full: true });
+    await p.goto(`${BASE}/lab/pulse?${F}&seed=out`); await p.click('button:has-text("Start the camera")'); await wait(p, 15000); await shot('lab-pulse'); await shot('lab-pulse-full', { full: true });
     await p.goto(`${BASE}/how-it-works?${F}&seed=out`); await p.waitForSelector('.recorder svg'); await wait(p, 800); await shot('how-it-works');
     await p.goto(`${BASE}/embed`); await p.waitForSelector('.recorder svg'); await wait(p, 500); await shot('embed');
   }],

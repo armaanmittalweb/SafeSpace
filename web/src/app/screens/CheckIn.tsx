@@ -127,7 +127,7 @@ function Measuring({ conn, onDone, onCancel, onFail }: { conn: LiveConnection; o
   const left = startedAt == null ? DURATION : Math.max(0, DURATION - Math.floor((now - startedAt) / 1000));
   const finding = startedAt == null;
   const tip = finding
-    ? (q.why && q.why !== 'Starting up' && q.q === 'poor' ? q.why : 'Finding your pulse. The minute starts once it is steady.')
+    ? (q.q === 'poor' && q.why && /Cover|dark|lightly/.test(q.why) ? q.why : 'Finding your pulse. The minute starts once it is steady.')
     : q.why ?? (q.q === 'good' ? 'Good. Keep still and breathe normally.' : 'Keep your fingertip still over the lens and flash.');
   const slow = finding && now - opened.current > 20000;
   return (

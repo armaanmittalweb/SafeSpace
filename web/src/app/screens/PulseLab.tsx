@@ -83,13 +83,13 @@ export function PulseLab() {
           <div class="card lab-live">
             <div class="live-top">
               <div class="live-hr">
-                <span class="num num-hero">{bpm10 ? Math.round(bpm10) : '--'}</span>
+                <span class={`num num-hero ${bpm10 ? '' : 'placeholder'}`}>{bpm10 ? Math.round(bpm10) : '—'}</span>
                 <span class="live-unit">bpm<span class="muted"> · mean of the last 10 s</span></span>
               </div>
               <QualityMeter q={q.q} why={q.why} />
             </div>
             <div class="paper-frame"><Trace subscribe={sub} beats={beats.map((b) => b.t)} /></div>
-            <p class="live-tip">{q.why ?? 'Good. Keep still.'}</p>
+            <p class="live-tip">{q.why && q.why !== 'Starting up' ? q.why : q.q === 'poor' ? 'Finding your pulse.' : 'Good. Keep still.'}</p>
             <p class="fine">{conn.device}</p>
           </div>
         )}
