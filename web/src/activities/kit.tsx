@@ -52,6 +52,20 @@ export function useReducedMotion(): boolean {
   return r;
 }
 
+/** Width of an SVG in CSS pixels, so charts can draw text at its real size. */
+export function useWidth(fallback: number) {
+  const ref = useRef<SVGSVGElement>(null);
+  const [w, setW] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => { const x = Math.round(e.contentRect.width); if (x > 0) setW(x); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w] as const;
+}
+
 /** Calls cb on every animation frame while `on`, with ms since it started. */
 export function useFrames(on: boolean, cb: (elapsedMs: number, now: number) => void) {
   const ref = useRef(cb);

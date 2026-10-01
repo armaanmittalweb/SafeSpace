@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { VNode } from 'preact';
 import type { ActivityId, ActivityResult, Beat, InputSource, LiveConnection, Measurement, StressSession, StressSessionProps } from '../contract';
 import { activityById } from '../activities';
-import { fmtClock, useCountdown, type RunProps } from '../activities/kit';
+import { fmtClock, useCountdown, useWidth, type RunProps } from '../activities/kit';
 import '../activities/kit.css';
 import { changeWords, formatMetric, HEADLINE } from '../activities/labels';
 import {
@@ -48,19 +48,6 @@ function useSessionBeats(live: LiveConnection | undefined, on: boolean) {
 }
 
 /** Heart rate across the whole session on the phase bands. */
-function useWidth(fallback: number) {
-  const ref = useRef<SVGSVGElement>(null);
-  const [w, setW] = useState(fallback);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(([e]) => { const x = Math.round(e.contentRect.width); if (x > 0) setW(x); });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-  return [ref, w] as const;
-}
-
 export function SessionChart(p: { beats: readonly Beat[]; startedAt: number; totalS: number; bounds: { name: PhaseName; from: number; to: number }[]; restHr?: number | null; nowS?: number }) {
   // Drawn at the element's real width so labels stay at their CSS pixel size on phones.
   const [ref, W] = useWidth(600);

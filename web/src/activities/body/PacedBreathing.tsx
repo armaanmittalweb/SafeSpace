@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Beat, LiveConnection } from '../../contract';
-import { Intro, ResultView, RunFrame, useActivityFlow, useCountdown, useFrames, useReducedMotion, type Meta, type RunProps } from '../kit';
+import { Intro, ResultView, RunFrame, useActivityFlow, useCountdown, useFrames, useReducedMotion, useWidth, type Meta, type RunProps } from '../kit';
 import { BREATH, BREATH_S, breathAt, breathingMetrics } from './metrics';
 import './body.css';
 
@@ -14,9 +14,10 @@ const AHEAD_S = 10;
 
 /** Scrolling guide, like paper under a pen: the curve ahead is the breathing you are about to do. */
 export function BreathChart(p: { tS: number; beats: Beat[]; startedAt: number; reduced: boolean }) {
-  const W = 300, H = 120, nowX = (PAST_S / (PAST_S + AHEAD_S)) * W;
+  const [ref, W] = useWidth(600);
+  const H = 150, nowX = (PAST_S / (PAST_S + AHEAD_S)) * W;
   const x = (s: number) => nowX + ((s - p.tS) / (PAST_S + AHEAD_S)) * W;
-  const guideY = (fill: number) => 18 + (1 - fill) * 56;
+  const guideY = (fill: number) => 20 + (1 - fill) * 66;
   const pts: string[] = [];
   for (let s = p.tS - PAST_S; s <= p.tS + AHEAD_S; s += 0.2) {
     if (s < 0) continue;
@@ -29,21 +30,21 @@ export function BreathChart(p: { tS: number; beats: Beat[]; startedAt: number; r
   if (hr.length > 1) {
     lo = Math.floor(Math.min(...hr.map((b) => b.v)) - 2);
     hi = Math.ceil(Math.max(...hr.map((b) => b.v)) + 2);
-    const y = (v: number) => 112 - ((v - lo) / Math.max(hi - lo, 6)) * 34;
+    const y = (v: number) => 138 - ((v - lo) / Math.max(hi - lo, 6)) * 38;
     hrPath = hr.map((b) => `${x(b.s).toFixed(1)},${y(b.v).toFixed(1)}`).join(' ');
   }
   const cur = breathAt(p.tS);
   return (
-    <svg class="br-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={hr.length > 1 ? `Breathing guide with your heart rate between ${lo} and ${hi} beats per minute` : 'Breathing guide'}>
+    <svg ref={ref} class="br-chart" viewBox={`0 0 ${W} ${H}`} style={{ height: `${H}px` }} role="img" aria-label={hr.length > 1 ? `Breathing guide with your heart rate between ${lo} and ${hi} beats per minute` : 'Breathing guide'}>
       <line x1="0" x2={W} y1={guideY(1)} y2={guideY(1)} class="br-grid" />
       <line x1="0" x2={W} y1={guideY(0)} y2={guideY(0)} class="br-grid" />
       <text x="4" y={guideY(1) - 4} class="br-label">in</text>
-      <text x="4" y={guideY(0) + 10} class="br-label">out</text>
+      <text x="4" y={guideY(0) + 14} class="br-label">out</text>
       <polyline points={pts.join(' ')} class="br-guide" />
       {hrPath && <polyline points={hrPath} class="br-hr" />}
       {hrPath && <text x={W - 4} y={H - 4} text-anchor="end" class="br-label">heart rate</text>}
       <line x1={nowX} x2={nowX} y1="6" y2={H - 4} class="br-now" />
-      {!p.reduced && <circle cx={nowX} cy={guideY(cur.fill)} r="3.4" class="br-dot" />}
+      {!p.reduced && <circle cx={nowX} cy={guideY(cur.fill)} r="5" class="br-dot" />}
     </svg>
   );
 }
@@ -95,7 +96,7 @@ function Run(p: { durationS: number; live?: LiveConnection; embedded?: boolean; 
         {p.live ? (
           <dl class="br-readout">
             <div><dt>Heart rate</dt><dd class="ax-mono">{lastHr ?? '–'}<small>bpm</small></dd></div>
-            <div><dt>Swing last breath</dt><dd class="ax-mono">{swing == null ? '–' : swing.toFixed(0)}<small>bpm</small></dd></div>
+            <div><dt>Swing last breath</dt>{swing == null ? <dd class="br-wait">After the first breath</dd> : <dd class="ax-mono">{swing.toFixed(0)}<small>bpm</small></dd>}</div>
           </dl>
         ) : (
           <p class="ax-note">Connect a heart-rate strap to see your heart rate rise as you breathe in and fall as you breathe out.</p>

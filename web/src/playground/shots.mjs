@@ -23,7 +23,7 @@ const VIEWS = [
   'devices-empty', 'devices-connected', 'devices-unavailable', 'devices-states', 'devices-import', 'picker',
   ...ACTS.flatMap((a) => [`${a}-start`, `${a}-run`, `${a}-done`]),
   'session-intro', 'session-rest', 'session-challenge', 'session-summary', 'session-summary-nodevice',
-].filter((v) => !process.env.ONLY || v.includes(process.env.ONLY));
+].filter((v) => !process.env.ONLY || process.env.ONLY.split(',').some((o) => v.includes(o)));
 
 async function act(p, v) {
   const box = async (sel) => (await p.locator(sel).first().boundingBox());
@@ -110,7 +110,7 @@ for (const v of VIEWS) {
 }
 // End to end: a small generated E4 session through the Devices panel, parsed by the real
 // import worker under the production CSP.
-if (!process.env.ONLY || 'import-e2e'.includes(process.env.ONLY)) {
+if (!process.env.ONLY || process.env.ONLY.includes('import')) {
   const { zipSync, strToU8 } = await import('fflate');
   const start = 1772352000, n4 = 180 * 4;
   const eda = [`${start}`, '4.0', ...Array.from({ length: n4 }, (_, i) => (0.8 + 0.002 * i / 4).toFixed(4))];
