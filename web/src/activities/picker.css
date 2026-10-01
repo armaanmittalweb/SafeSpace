@@ -1,0 +1,36 @@
+.ap { display: flex; flex-direction: column; gap: 28px; }
+.ap-session {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'text chev' 'phases phases'; align-items: center; gap: 14px 16px;
+  width: 100%; text-align: left; padding: 18px 18px 16px; cursor: pointer; font: inherit; color: inherit;
+  background: var(--ax-card); border: 1px solid var(--ax-edge); border-radius: var(--ax-r);
+}
+.ap-session:hover { border-color: var(--line); }
+.ap-sess-text { grid-area: text; display: flex; flex-direction: column; gap: 4px; }
+.ap-sess-title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.ap-sess-body { font-size: 14.5px; color: var(--ink-2); line-height: 1.45; max-width: 60ch; }
+.ap-session .ap-chev { grid-area: chev; }
+.ap-phases { grid-area: phases; width: 100%; height: 10px; }
+.ap-phases .rest { fill: var(--grid-major); }
+.ap-phases .challenge { fill: var(--ink); }
+
+.ap-group { display: flex; flex-direction: column; gap: 8px; }
+.ap-group-head { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; }
+.ap-group-head h2 { color: var(--ink-2); }
+.ap-list { border-top: 1px solid var(--ink); }
+.ap-list li { border-bottom: 1px solid var(--rule); }
+.ap-row {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px;
+  width: 100%; min-height: 64px; padding: 12px 4px; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer;
+}
+.ap-row:hover .ap-name { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.ap-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ap-name { font-size: 16px; font-weight: 600; }
+.ap-blurb { font-size: 14px; color: var(--muted); line-height: 1.4; }
+.ap-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.ap-chev { color: var(--muted); }
+@media (max-width: 520px) {
+  .ap-row { grid-template-columns: 1fr auto; gap: 4px 12px; }
+  .ap-meta { grid-column: 1; grid-row: 2; flex-direction: row; gap: 10px; align-items: baseline; color: var(--muted); }
+  .ap-meta > span + span::before { content: '\00b7'; margin-right: 10px; }
+  .ap-row .ap-chev { grid-column: 2; grid-row: 1 / span 2; }
+}

@@ -5,6 +5,9 @@ import type { LiveConnection, LiveInput } from '../contract/inputs';
 import { DEFAULT_SETTINGS, type Baseline, type CheckIn, type Me, type StressSession, type UserSettings } from '../contract/records';
 import type { SyncStatus } from '../contract/vault';
 import { SETTINGS_RECORD_ID, vault } from './vault';
+import { liveStore } from '../inputs/live-store';
+import { INPUTS } from './ports';
+import type { ActivityId, ActivityResult } from '../contract/records';
 
 export type Auth =
   | { state: 'loading' }
@@ -107,8 +110,7 @@ export async function signedIn(me: Me) {
 }
 
 export async function signOut() {
-  const d = getState().device;
-  if (d) await d.conn.disconnect().catch(() => {});
+  await liveStore.disconnect().catch(() => {});
   await vault.signOut();
   setState({ auth: { state: 'out' }, device: null, recoveryKey: null });
   await reload();
@@ -120,18 +122,38 @@ export async function saveSettings(p: Partial<UserSettings>) {
   await vault.put('settings', SETTINGS_RECORD_ID, next);
 }
 
+// The connected device lives in the inputs agent's liveStore (its Devices panel sets it); the app mirrors
+// it here with the live heart rate and battery, so Today and the check-in can show it.
+function inputFor(conn: LiveConnection): LiveInput {
+  const src = (conn as LiveConnection & { source?: string }).source;
+  const id = src === 'polar-h10' ? 'ble-hr' : src ?? 'ble-hr';
+  return (INPUTS.find((i) => i.id === id && i.kind === 'live') ?? INPUTS.find((i) => i.kind === 'live' && i.id === 'ble-hr')) as LiveInput;
+}
+let unsubBeat: (() => void) | null = null;
+liveStore.subscribe((conn) => {
+  unsubBeat?.(); unsubBeat = null;
+  if (!conn) { setState({ device: null }); return; }
+  setState({ device: { input: inputFor(conn), conn, hr: null, battery: null } });
+  unsubBeat = conn.onBeat((b) => setState((s) => (s.device?.conn === conn ? { device: { ...s.device, hr: b.hr } } : {})));
+  void conn.battery?.().then((battery) => setState((s) => (s.device?.conn === conn ? { device: { ...s.device, battery } } : {})));
+});
+
 export async function connectDevice(input: LiveInput) {
   const conn = await input.connect();
-  const prev = getState().device;
-  if (prev) await prev.conn.disconnect().catch(() => {});
-  setState({ device: { input, conn, hr: null, battery: null } });
-  conn.onBeat((b) => setState((s) => (s.device?.conn === conn ? { device: { ...s.device, hr: b.hr } } : {})));
-  conn.onDisconnect?.(() => setState((s) => (s.device?.conn === conn ? { device: null } : {})));
-  void conn.battery?.().then((battery) => setState((s) => (s.device?.conn === conn ? { device: { ...s.device, battery } } : {})));
+  const prev = liveStore.get();
+  liveStore.set(conn);
+  if (prev && prev !== conn) await prev.disconnect().catch(() => {});
   return conn;
 }
 export async function disconnectDevice() {
-  const d = getState().device;
-  setState({ device: null });
-  if (d) await d.conn.disconnect().catch(() => {});
+  await liveStore.disconnect().catch(() => {});
+}
+
+/** Completed runs of an activity the person did calm: standalone runs and the rest phase of stress sessions. */
+export function calmRuns(id?: ActivityId): ActivityResult[] {
+  const s = getState();
+  const standalone = s.checkins.flatMap((c) => c.activities).filter((a) => a.completed);
+  const rest = s.sessions.flatMap((x) => x.phases.filter((p) => p.name === 'rest').flatMap((p) => p.activities)).filter((a) => a.completed);
+  const all = [...standalone, ...rest];
+  return id ? all.filter((a) => a.activity === id) : all;
 }

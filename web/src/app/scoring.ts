@@ -64,6 +64,11 @@ export function baselineFrom(readings: Measurement[], id: string, createdAt: num
   const days = new Set(readings.map((r) => dayKey(r.startedAt))).size;
   return { id, createdAt, readings, calibration: { mean: cal.mean, sd: cal.sd, n: days } };
 }
+/** A Baseline from one stress session's rest phase: n counts its 60-s rest windows (contract amendment). */
+export function baselineFromRest(readings: Measurement[], id: string, createdAt: number): Baseline {
+  const b = baselineFrom(readings, id, createdAt);
+  return { ...b, calibration: { ...b.calibration, n: readings.length } };
+}
 export const baselineReady = (b: Baseline | null | undefined): boolean => !!b && b.calibration.n >= BASELINE_NEEDED;
 export const baselineHasToday = (b: Baseline | null | undefined, now = Date.now()) => !!b && b.readings.some((r) => dayKey(r.startedAt) === dayKey(now));
 

@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5175 --strictPort",
     "test": "vitest run",
-    "shots": "node e2e/shots.mjs"
+    "shots": "node e2e/shots.mjs",
+    "shots:inputs": "node src/playground/shots.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.3",
