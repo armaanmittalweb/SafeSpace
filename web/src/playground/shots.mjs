@@ -5,14 +5,17 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
-import { createServer } from 'vite';
+import { build, preview } from 'vite';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = fileURLToPath(new URL('../../shots/inputs/', import.meta.url));
 mkdirSync(OUT, { recursive: true });
 
-const server = await createServer({ root, server: { port: 5199, strictPort: true }, logLevel: 'error' });
-await server.listen();
+// A production build of the playground page, served by `vite preview` with the vercel.json
+// headers (CSP included), so the components are checked under the policy they ship with.
+const outDir = fileURLToPath(new URL('../../shots/.playground-build/', import.meta.url));
+await build({ root, logLevel: 'error', build: { outDir, emptyOutDir: true, rollupOptions: { input: fileURLToPath(new URL('./index.html', import.meta.url)) } } });
+const server = await preview({ root, logLevel: 'error', build: { outDir }, preview: { port: 5199, strictPort: true } });
 const BASE = 'http://localhost:5199/src/playground/index.html';
 
 const ACTS = ['typing', 'follow-dot', 'target-taps', 'steady-hand', 'tap-rhythm', 'stroop', 'beat-the-clock', 'paced-breathing'];
@@ -105,7 +108,30 @@ for (const v of VIEWS) {
     }
   }
 }
+// End to end: a small generated E4 session through the Devices panel, parsed by the real
+// import worker under the production CSP.
+if (!process.env.ONLY || 'import-e2e'.includes(process.env.ONLY)) {
+  const { zipSync, strToU8 } = await import('fflate');
+  const start = 1772352000, n4 = 180 * 4;
+  const eda = [`${start}`, '4.0', ...Array.from({ length: n4 }, (_, i) => (0.8 + 0.002 * i / 4).toFixed(4))];
+  const temp = [`${start}`, '4.0', ...Array.from({ length: n4 }, () => '33.10')];
+  const ibi = [`${start}, IBI`];
+  for (let t = 0.4, i = 0; t < 179; i++) { const r = i % 2 ? 0.8 : 0.82; t += r; ibi.push(`${t.toFixed(3)},${r}`); }
+  const zip = zipSync({ 'EDA.csv': strToU8(eda.join(String.fromCharCode(10))), 'TEMP.csv': strToU8(temp.join(String.fromCharCode(10))), 'IBI.csv': strToU8(ibi.join(String.fromCharCode(10))) });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const p = await ctx.newPage();
+  p.on('pageerror', (e) => report.console.push(`import-e2e: pageerror ${e.message}`));
+  p.on('console', (m) => { if (m.type() === 'error') report.console.push(`import-e2e: ${m.text()}`); });
+  await p.goto(`${BASE}?v=devices-empty`);
+  await p.setInputFiles('#dv-file-import-e4', { name: '1772352000_A01B2C.zip', mimeType: 'application/zip', buffer: Buffer.from(zip) });
+  const done = p.locator('.dv-done');
+  await done.waitFor({ timeout: 15000 }).catch(() => undefined);
+  report.importE2E = (await done.count()) ? await done.textContent() : `FAILED: ${await p.locator('.dv-reason').allTextContents()}`;
+  await p.screenshot({ path: `${OUT}import-e2e-mobile-light.png`, fullPage: true });
+  await ctx.close();
+}
+
 await browser.close();
 await server.close();
 writeFileSync(`${OUT}report.json`, JSON.stringify(report, null, 2));
-console.log(JSON.stringify({ views: VIEWS.length, axeViolations: Object.keys(report.axe).length ? report.axe : 'none', console: report.console.slice(0, 30) }, null, 2));
+console.log(JSON.stringify({ views: VIEWS.length, importE2E: report.importE2E, axeViolations: Object.keys(report.axe).length ? report.axe : 'none', console: report.console.slice(0, 30) }, null, 2));
