@@ -30,7 +30,7 @@ function RunFrame({ title, children }: { title: string; children: preact.Compone
     <div class="flow-body">
       <header class="flow-bar">
         <Link href="/activities" class="icon-btn" aria-label="Back to activities"><IconBack /></Link>
-        <span class="flow-title">{title}</span>
+        <h1 class="flow-title">{title}</h1>
         <span class="icon-btn-space" />
       </header>
       <div class="flow-content">{children}</div>

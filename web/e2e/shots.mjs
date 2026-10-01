@@ -94,8 +94,10 @@ const scenarios = [
     await p.click('.hrow >> nth=0'); await p.waitForSelector('.result'); await wait(p, 1100); await shot('history-detail'); await shot('history-detail-full', { full: true });
     await p.goto(`${BASE}/history?${F}&seed=new`); await p.waitForSelector('.empty'); await shot('history-empty');
   }],
-  ['activities', async (p, shot) => { await p.goto(`${BASE}/activities?${F}&seed=sample`); await p.waitForSelector('.job-grid'); await wait(p); await shot('activities'); await shot('activities-full', { full: true }); }],
-  ['devices', async (p, shot) => { await p.goto(`${BASE}/devices?${F}&seed=sample`); await p.waitForSelector('.dev-row'); await wait(p, 600); await shot('devices'); await shot('devices-full', { full: true }); }],
+  ['activities', async (p, shot) => { await p.goto(`${BASE}/activities?${F}&seed=sample`); await p.waitForSelector('.ap'); await wait(p); await shot('activities'); await shot('activities-full', { full: true });
+    await p.goto(`${BASE}/activities/typing?${F}&seed=sample`); await wait(p, 900); await shot('activity-typing');
+    await p.goto(`${BASE}/activities/session?${F}&seed=sample`); await wait(p, 900); await shot('activity-session'); }],
+  ['devices', async (p, shot) => { await p.goto(`${BASE}/devices?${F}&seed=sample`); await p.waitForSelector('.dv'); await wait(p, 600); await shot('devices'); await shot('devices-full', { full: true }); }],
   ['settings', async (p, shot) => { await p.goto(`${BASE}/settings?${F}&seed=sample`); await p.waitForSelector('.settings'); await wait(p, 600); await shot('settings'); await shot('settings-full', { full: true }); }],
   ['misc', async (p, shot) => {
     await p.goto(`${BASE}/nope?${F}&seed=sample`); await p.waitForSelector('.not-found'); await shot('404');
