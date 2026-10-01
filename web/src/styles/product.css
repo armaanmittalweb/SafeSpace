@@ -310,7 +310,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .steps-dots { display: flex; gap: 6px; }
 .steps-dots li { flex: 1; height: 6px; border-radius: 3px; background: var(--card-edge); }
 .steps-dots li.done { background: var(--ink); }
-.steps-dots li.next { background: var(--line); }
+.steps-dots li.next { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
 .steps-dots.big { max-width: 240px; margin: 10px 0 18px; }
 .steps-dots.big li { height: 8px; }
 .device-line { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 10px 14px; border: 1px solid var(--card-edge); border-radius: 10px; margin-bottom: 12px; color: var(--ink); text-decoration: none; }
