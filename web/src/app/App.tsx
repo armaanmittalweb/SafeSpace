@@ -77,7 +77,9 @@ export function PublicShell({ children, wide = false, bar = true }: { children: 
           <Link href="/" class="brand"><Mark /><span>SafeSpace</span></Link>
           <nav aria-label="Account" class="topbar-nav">
             <Link href="/how-it-works" class="hide-sm">How it works</Link>
-            {s.auth.state === 'in' ? <Link href="/" class="btn small secondary">Open app</Link> : <Link href="/signin" class="btn small secondary">Sign in</Link>}
+            {s.auth.state === 'in' ? <Link href="/" class="btn small secondary">Open app</Link>
+              : location.pathname === '/signin' ? <Link href="/signup" class="btn small secondary">Create an account</Link>
+              : <Link href="/signin" class="btn small secondary">Sign in</Link>}
           </nav>
         </header>
       )}

@@ -67,7 +67,7 @@ export function WeekStrip({ checkins, now = Date.now(), label = 'This week' }: {
           return (
             <li class={`week-day ${today ? 'today' : ''}`}>
               <span class="week-name" aria-hidden="true">{name[0]}</span>
-              <span class={`cell ${n === 0 ? 'empty' : ''} ${future ? 'future' : ''}`} style={dayStyle(score)}>
+              <span class={`cell ${n === 0 ? 'none' : ''} ${future ? 'future' : ''}`} style={dayStyle(score)}>
                 {n > 0 && score == null && <i class="dot" />}
               </span>
               <span class="week-val mono" aria-hidden="true">{score == null ? '' : fmtSigned(score, 1)}</span>

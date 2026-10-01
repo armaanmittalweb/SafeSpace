@@ -71,6 +71,7 @@ button:disabled { cursor: not-allowed; }
 .icon-btn-space { width: 44px; height: 44px; }
 
 .cta {
+  white-space: normal;
   justify-content: flex-start; gap: 14px; width: 100%; min-height: 76px; padding: 0 22px;
   border-radius: var(--radius-card); text-align: left;
 }
@@ -134,7 +135,7 @@ button:disabled { cursor: not-allowed; }
   position: relative; display: flex; align-items: center; justify-content: center; width: 100%; max-width: 46px;
   aspect-ratio: 1 / 1; align-self: start; border-radius: 9px; border: 1px solid transparent; background: var(--card-edge);
 }
-.cell.empty { background: transparent; border: 1px dashed var(--line); }
+.cell.none { background: transparent; border: 1px dashed var(--line); }
 .cell.future { opacity: 0.45; }
 .week-day.today .cell { outline: 2px solid var(--ink); outline-offset: 2px; }
 .week-day.today .week-name { color: var(--ink); font-weight: 500; }
@@ -302,6 +303,9 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .today-main, .today-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .latest .note-line { font-size: 15px; color: var(--ink-2); line-height: 1.45; }
 .meta-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13.5px; color: var(--muted); }
+.guest-card { margin-bottom: 12px; }
+.alt-line { font-size: 14.5px; color: var(--muted); padding: 0 4px; }
+.alt-line a { color: var(--ink); }
 .suggestion { font-size: 15px; line-height: 1.45; color: var(--ink-2); border-left: 2px solid var(--ink); padding: 2px 0 2px 12px; margin: 4px 2px; }
 .steps-dots { display: flex; gap: 6px; }
 .steps-dots li { flex: 1; height: 6px; border-radius: 3px; background: var(--card-edge); }
@@ -433,7 +437,7 @@ button.option:hover:not(:disabled) { border-color: var(--ink); }
 @media (min-width: 600px) { .two-lists { grid-template-columns: 1fr 1fr; gap: 28px; } }
 
 /* ---------- result ---------- */
-.result { display: flex; flex-direction: column; gap: 12px; }
+.result, .result-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .result-main { gap: 10px; padding: 20px; }
 .sig-list li { padding: 14px 0 12px; border-top: 1px solid var(--card-edge); }
 .sig-list li:first-child { border-top: 0; padding-top: 2px; }
@@ -567,4 +571,14 @@ button.option:hover:not(:disabled) { border-color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* wide screens: the result reads as two columns, forms sit a little lower */
+@media (min-width: 900px) {
+  .flow-body:has(.flow-content.wide) { max-width: 920px; }
+  .flow-content.wide .result { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px 16px; align-items: start; }
+  .flow-content.wide .result > .provenance { grid-column: 1 / -1; }
+  .flow-body:has(.flow-content.wide) .flow-foot { display: flex; justify-content: flex-end; }
+  .flow-body:has(.flow-content.wide) .flow-foot .btn.block { width: auto; min-width: 240px; }
+  .form-page { margin-top: 56px; }
 }

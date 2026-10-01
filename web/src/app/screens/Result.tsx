@@ -28,6 +28,7 @@ export function ResultView({ c, baseline, baselineCount, children }: { c: CheckI
   const order = SIGNALS.filter((s) => scored.includes(s));
   return (
     <div class="result">
+      <div class="result-col">
       <section class="card result-main" aria-labelledby="res-h">
         {fused != null ? (
           <>
@@ -80,6 +81,8 @@ export function ResultView({ c, baseline, baselineCount, children }: { c: CheckI
         </section>
       )}
 
+      </div>
+      <div class="result-col">
       {m && notUsed.length > 0 && (
         <section class="card quiet" aria-labelledby="nm-h">
           <h2 id="nm-h" class="kicker">Not measured</h2>
@@ -115,6 +118,7 @@ export function ResultView({ c, baseline, baselineCount, children }: { c: CheckI
         </section>
       )}
 
+      </div>
       {m && (
         <p class="provenance">
           {stamp(m.startedAt)} · {SOURCE_TEXT[m.source]}{m.device && m.source !== 'camera' ? ` (${m.device})` : ''} · {m.durationS} s · signal {QUALITY_TEXT[m.quality].toLowerCase()}

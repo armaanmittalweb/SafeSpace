@@ -1,9 +1,10 @@
 import type { Baseline, CheckIn } from '../../contract/records';
-import { DAYS_LONG, fmtSigned, longDate, plural, relDay, sameDay, startOfWeek, time } from '../format';
+import { DAYS_LONG, fmtSigned, longDate, plural, relDay, sameDay, stamp, startOfWeek, time } from '../format';
 import { IconChevron, IconStrap, IconToday } from '../icons';
 import { Link } from '../router';
 import { baselineHasToday, baselineReady, BASELINE_NEEDED, feelingWord } from '../scoring';
-import { useApp } from '../store';
+import { setGuest, toast, useApp } from '../store';
+import { vault } from '../vault';
 import { avg, Legend, ScoreFigure, ScoreScale, SyncLine, TrendChart, WeekStrip } from '../ui';
 
 const DAY = 864e5;
@@ -60,7 +61,7 @@ export function LatestCard({ c, href }: { c: CheckIn; href?: string }) {
   return href ? <Link href={href} class="card card-link latest">{body}<IconChevron class="card-chev" /></Link> : <div class="card latest">{body}</div>;
 }
 
-export function BaselineCard({ b, sample = false }: { b: Baseline | null; sample?: boolean }) {
+export function BaselineCard({ b, sample = false, primary = false }: { b: Baseline | null; sample?: boolean; primary?: boolean }) {
   const n = b?.calibration.n ?? 0;
   const doneToday = baselineHasToday(b);
   return (
@@ -72,7 +73,7 @@ export function BaselineCard({ b, sample = false }: { b: Baseline | null; sample
           : doneToday ? `Today's reading is in. Come back tomorrow for reading ${n + 1}.`
           : `Sit quietly for two minutes, then take reading ${n + 1}.`}
       </p>
-      {!sample && !doneToday && <Link href="/baseline" class="btn secondary block">Take reading {n + 1}</Link>}
+      {!sample && !doneToday && !primary && <Link href="/baseline" class="btn secondary block">Take reading {n + 1}</Link>}
     </section>
   );
 }
@@ -82,15 +83,24 @@ export function TodayView({ checkins, baseline, sample = false, now = Date.now()
   const latest = checkins[0];
   const week = checkins.filter((c) => c.createdAt >= startOfWeek(now));
   const wk = avg(week.map((c) => c.score?.fused).filter((v): v is number => v != null));
+  const n = baseline?.calibration.n ?? 0;
+  // Until the baseline is set, today's baseline reading is the main thing to do.
+  const baselineFirst = !sample && !ready && !baselineHasToday(baseline);
   return (
     <div class="today">
       <div class="today-main">
-        {sample ? (
+        {baselineFirst ? (
+          <>
+            <Link href="/baseline" class="btn primary cta"><IconToday /> <span>Take baseline reading {n + 1}<small>Sit quietly for two minutes first, then 60 seconds</small></span></Link>
+            <BaselineCard b={baseline} primary />
+            <p class="alt-line">Or <Link href="/check-in">start a check-in</Link>. It will show your heart rate, with no score until the baseline is set.</p>
+          </>
+        ) : sample ? (
           <span class="btn primary cta" aria-hidden="true"><IconToday /> <span>Start a check-in<small>60 seconds with your camera</small></span></span>
         ) : (
           <Link href="/check-in" class="btn primary cta"><IconToday /> <span>Start a check-in<small>60 seconds with your camera{ready ? '' : ' · no score until your baseline is set'}</small></span></Link>
         )}
-        {latest ? <LatestCard c={latest} href={sample ? undefined : `/history/${latest.id}`} /> : (
+        {baselineFirst && !latest ? null : latest ? <LatestCard c={latest} href={sample ? undefined : `/history/${latest.id}`} /> : (
           <div class="card empty-card">
             <p class="card-title">No check-ins yet</p>
             <p class="muted">Your results appear here: a score from calm to stressed, what each signal contributed, and a short note.</p>
@@ -98,22 +108,28 @@ export function TodayView({ checkins, baseline, sample = false, now = Date.now()
         )}
       </div>
       <div class="today-side">
-        {!ready && <BaselineCard b={baseline} sample={sample} />}
-        <section class="card" aria-labelledby="wk-h">
+        {!ready && !baselineFirst && <BaselineCard b={baseline} sample={sample} />}
+        {checkins.length > 0 && <section class="card" aria-labelledby="wk-h">
           <div class="card-head">
             <h2 id="wk-h" class="kicker">This week</h2>
             {wk != null && <span class="kicker">avg {fmtSigned(wk)}</span>}
           </div>
           <WeekStrip checkins={checkins} now={now} />
           <Legend />
-        </section>
+        </section>}
         {checkins.some((c) => c.score?.fused != null) && (
           <section class="card" aria-labelledby="tr-h">
             <div class="card-head"><h2 id="tr-h" class="kicker">Last two weeks</h2></div>
             <TrendChart checkins={checkins} now={now} />
           </section>
         )}
-        <p class="suggestion">{suggestion(checkins, now)}</p>
+        {!(baselineFirst && !checkins.length) && <p class="suggestion">{suggestion(checkins, now)}</p>}
+        {baselineFirst && !checkins.length && (
+          <div class="card quiet">
+            <h2 class="card-title">What you will see</h2>
+            <p class="muted">After each check-in: a score from calm to stressed against your own rest, what each signal contributed, what was not measured, and a short note. Over days, a calendar of what tends to raise it.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -131,6 +147,16 @@ export function Today() {
       </header>
       {s.device && (
         <Link href="/devices" class="device-line"><IconStrap size={18} /><span>{s.device.conn.device}</span><span class="mono">{s.device.hr ? `${Math.round(s.device.hr)} bpm` : 'connected'}</span></Link>
+      )}
+      {s.guest && (
+        <div class="card guest-card" role="region" aria-labelledby="guest-h">
+          <h2 id="guest-h" class="card-title">Keep the check-in you made before signing up?</h2>
+          <p class="muted">{stamp(s.guest.createdAt)}{s.guest.measurement?.features.hr_mean ? ` · ${Math.round(s.guest.measurement.features.hr_mean)} bpm` : ''}. It is only on this device until you save it.</p>
+          <div class="actions">
+            <button type="button" class="btn primary small" onClick={async () => { await vault.put('checkin', s.guest!.id, s.guest); setGuest(null); toast('Saved to your history.'); }}>Save it</button>
+            <button type="button" class="btn ghost small" onClick={() => setGuest(null)}>Discard</button>
+          </div>
+        </div>
       )}
       <TodayView checkins={s.checkins} baseline={s.baseline} now={now} />
     </div>
