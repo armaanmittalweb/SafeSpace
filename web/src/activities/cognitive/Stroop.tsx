@@ -82,7 +82,7 @@ export function Stroop(props: RunProps) {
     return (
       <Intro meta={stroopMeta} lengthS={f.durationS} onStart={f.start} onCancel={props.onCancel}
         lead="Words appear in coloured ink. Answer with the colour of the ink, not the word. Use the buttons, or the R, G, B and Y keys."
-        preview={<p class="cg-example" aria-label="Example: the word BLUE in red ink. The answer is red."><span style={{ color: 'var(--st-red)' }} aria-hidden="true">BLUE</span><span class="ax-small" aria-hidden="true">answer: red</span></p>}
+        preview={<div class="cg-example" role="img" aria-label="Example: the word BLUE in red ink. The answer is red."><span style={{ color: 'var(--st-red)' }}>BLUE</span><span class="ax-small">answer: red</span></div>}
         measures="Reaction time for matching and mismatched words, errors, and how much the mismatch slows you."
         keeps="Timings and right or wrong only." />
     );

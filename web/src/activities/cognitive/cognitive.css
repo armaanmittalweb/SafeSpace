@@ -1,5 +1,5 @@
 /* Colour words */
-.cg-stage { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); min-height: 176px; display: grid; place-items: center; }
+.cg-stage { border-bottom: 1px solid var(--rule); min-height: 176px; display: grid; place-items: center; }
 .cg-word { font: 650 clamp(44px, 12vw, 72px)/1 var(--sans); letter-spacing: 0.02em; }
 .cg-answers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 @media (max-width: 560px) { .cg-answers { grid-template-columns: 1fr 1fr; } }
@@ -11,7 +11,7 @@
 .cg-example > span:first-child { font: 650 32px/1 var(--sans); letter-spacing: 0.02em; }
 
 /* Beat the clock */
-.bc-stage { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); padding: 22px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.bc-stage { border-bottom: 1px solid var(--rule); padding: 8px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .bc-problem { font-size: clamp(40px, 11vw, 60px); line-height: 1; letter-spacing: -0.01em; }
 .bc-timer { width: min(320px, 80%); height: 3px; background: var(--rule); border-radius: 2px; overflow: hidden; }
 .bc-timer i { display: block; height: 100%; background: var(--ink); transform-origin: left; transition: transform 0.1s linear; }

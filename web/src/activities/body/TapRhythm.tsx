@@ -21,7 +21,7 @@ function click(ctx: AudioContext | null, at: number, accent: boolean) {
   o.start(at); o.stop(at + 0.08);
 }
 
-function Run(p: { sound: boolean; embedded?: boolean; onEnd: (m: Record<string, number>, completed: boolean) => void }) {
+function Run(p: { audio: AudioContext | null; embedded?: boolean; onEnd: (m: Record<string, number>, completed: boolean) => void }) {
   const { periodMs, pacedBeats, freeTaps } = RHYTHM;
   const t0 = useRef(performance.now() + 600).current;
   const beatTimes = useRef(Array.from({ length: LEAD_IN + pacedBeats }, (_, i) => t0 + i * periodMs)).current;
@@ -38,13 +38,13 @@ function Run(p: { sound: boolean; embedded?: boolean; onEnd: (m: Record<string, 
   };
   // Schedule the audible beat and the visual count.
   useEffect(() => {
-    let ctx: AudioContext | null = null;
-    if (p.sound && typeof AudioContext !== 'undefined') {
+    // The AudioContext is created by the Start click (browsers only allow sound after a gesture).
+    const ctx = p.audio;
+    if (ctx) {
       try {
-        ctx = new AudioContext();
         const base = ctx.currentTime + (t0 - performance.now()) / 1000;
         beatTimes.forEach((bt, i) => click(ctx, base + (bt - t0) / 1000, i < LEAD_IN));
-      } catch { ctx = null; }
+      } catch { /* no sound: the ticks still show the beat */ }
     }
     const ids = beatTimes.map((bt, i) => setTimeout(() => setBeat(i), Math.max(0, bt - performance.now())));
     // Give up if the person stops tapping for a long time in the free part.
@@ -89,9 +89,16 @@ function Run(p: { sound: boolean; embedded?: boolean; onEnd: (m: Record<string, 
 export function TapRhythm(props: RunProps) {
   const f = useActivityFlow(props, rhythmMeta);
   const [sound, setSound] = useState(true);
+  const audio = useRef<AudioContext | null>(null);
+  const start = () => {
+    if (sound && typeof AudioContext !== 'undefined') {
+      try { audio.current = new AudioContext(); } catch { audio.current = null; }
+    }
+    f.start();
+  };
   if (f.phase === 'intro') {
     return (
-      <Intro meta={rhythmMeta} lengthS={f.durationS} onStart={f.start} onCancel={props.onCancel}
+      <Intro meta={rhythmMeta} lengthS={f.durationS} onStart={start} onCancel={props.onCancel}
         lead={`After a count of four, tap along with ${RHYTHM.pacedBeats} beats. Then the beat stops and you keep tapping at the same pace for ${RHYTHM.freeTaps} more taps.`}
         measures="How close you tap to the beat, how even your taps are, and whether you speed up or slow down on your own."
         keeps="Tap times only."
@@ -103,6 +110,6 @@ export function TapRhythm(props: RunProps) {
         } />
     );
   }
-  if (f.phase === 'run') return <Run key={f.runKey} sound={sound} embedded={props.embedded} onEnd={f.finish} />;
+  if (f.phase === 'run') return <Run key={f.runKey} audio={audio.current} embedded={props.embedded} onEnd={f.finish} />;
   return <ResultView meta={rhythmMeta} result={f.result!} calmCount={f.calmCount} onDone={f.done} />;
 }

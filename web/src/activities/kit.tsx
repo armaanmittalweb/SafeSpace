@@ -174,7 +174,7 @@ export function ResultView(p: { meta: Meta; result: ActivityResult; calmCount: n
               <div class="ax-row" key={l.key}>
                 <dt>{l.label}</dt>
                 <dd>{formatMetric(l, r.metrics[l.key])}{l.unit && <small>{l.unit}</small>}</dd>
-                {words && <p class="ax-change">{words}</p>}
+                {words && <dd class="ax-change">{words}</dd>}
               </div>
             );
           })}

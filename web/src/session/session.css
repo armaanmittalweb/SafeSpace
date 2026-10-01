@@ -19,17 +19,17 @@
 .ss-hr-now span { font-size: 24px; }
 .ss-hr-now small { font-size: 12px; color: var(--muted); }
 
-.ss-sit { border-top: 1px solid var(--ink); padding: 26px 0 12px; display: flex; flex-direction: column; gap: 8px; }
+.ss-sit { padding: 18px 0 12px; display: flex; flex-direction: column; gap: 8px; }
 .ss-sit-big { font-size: clamp(22px, 5.5vw, 28px); font-weight: 600; letter-spacing: -0.012em; line-height: 1.25; max-width: 22ch; }
 
-.ss-chart { width: 100%; height: auto; display: block; }
+.ss-chart { width: 100%; display: block; overflow: visible; }
 .ss-band { fill: transparent; }
 .ss-band.challenge { fill: var(--grid); }
 .ss-grid { stroke: var(--rule); stroke-width: 0.7; }
 .ss-rest { stroke: var(--ink-2); stroke-width: 0.8; stroke-dasharray: 3 3; }
 .ss-hr { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
 .ss-now { stroke: var(--ink); stroke-width: 0.8; opacity: 0.45; }
-.ss-lbl { font: 400 9.5px var(--mono); fill: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.ss-lbl { font: 400 10px var(--mono); fill: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
 .ss-empty { font: 400 12px var(--sans); fill: var(--muted); }
 
 .ss-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
@@ -43,4 +43,5 @@
 .ss-text { font-size: 16px; line-height: 1.55; max-width: 62ch; text-wrap: pretty; }
 .ss-acts ul { border-top: 1px solid var(--ink); margin-top: 8px; }
 .ss-acts li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
-.ss-acts li .ax-mono { font-size: 13px; color: var(--ink-2); }
+.ss-act-m { font-size: 14px; color: var(--ink-2); }
+.ss-act-m b { font-weight: 400; color: var(--ink); }

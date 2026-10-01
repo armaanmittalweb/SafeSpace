@@ -33,7 +33,7 @@ const PHASES: { name: PhaseName; label: string; mins: number }[] = [
   { name: 'rest', label: 'Rest', mins: 3 }, { name: 'challenge', label: 'Challenge', mins: 4 }, { name: 'recovery', label: 'Recovery', mins: 3 },
 ];
 const STEP_NAME: Record<Step['kind'], string> = {
-  sit: 'Rest', typing: 'Typing check', 'follow-dot': 'Follow the dot', 'target-taps': 'Target taps', stroop: 'Colour words',
+  sit: 'Sit and rest', typing: 'Typing check', 'follow-dot': 'Follow the dot', 'target-taps': 'Target taps', stroop: 'Colour words',
   'beat-the-clock': 'Beat the clock', 'paced-breathing': 'Paced breathing', 'steady-hand': 'Steady hand', 'tap-rhythm': 'Tap the rhythm',
 };
 
@@ -48,8 +48,23 @@ function useSessionBeats(live: LiveConnection | undefined, on: boolean) {
 }
 
 /** Heart rate across the whole session on the phase bands. */
+function useWidth(fallback: number) {
+  const ref = useRef<SVGSVGElement>(null);
+  const [w, setW] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => { const x = Math.round(e.contentRect.width); if (x > 0) setW(x); });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w] as const;
+}
+
 export function SessionChart(p: { beats: readonly Beat[]; startedAt: number; totalS: number; bounds: { name: PhaseName; from: number; to: number }[]; restHr?: number | null; nowS?: number }) {
-  const W = 600, H = 170, top = 22, bottom = 150, left = 34;
+  // Drawn at the element's real width so labels stay at their CSS pixel size on phones.
+  const [ref, W] = useWidth(600);
+  const H = W < 480 ? 150 : 180, top = 22, bottom = H - 20, left = 30;
   const x = (s: number) => left + (Math.max(0, Math.min(s, p.totalS)) / p.totalS) * (W - left - 4);
   const pts = p.beats.map((b) => ({ s: (b.t - p.startedAt) / 1000, v: b.rr ? 60000 / b.rr : b.hr })).filter((q) => q.s >= 0 && q.v > 30 && q.v < 220);
   // 5-s smoothing so the line reads as a trend, not beat noise.
@@ -65,7 +80,7 @@ export function SessionChart(p: { beats: readonly Beat[]; startedAt: number; tot
   const ticks = [lo, Math.round((lo + hi) / 2), hi];
   const line = sm.map((q) => `${x(q.s).toFixed(1)},${y(q.v).toFixed(1)}`).join(' ');
   return (
-    <svg class="ss-chart" viewBox={`0 0 ${W} ${H}`} role="img"
+    <svg ref={ref} class="ss-chart" viewBox={`0 0 ${W} ${H}`} style={{ height: `${H}px` }} role="img"
       aria-label={vals.length ? `Heart rate through the session, from ${Math.round(Math.min(...vals))} to ${Math.round(Math.max(...vals))} beats per minute` : 'Session timeline. No heart-rate device connected.'}>
       {p.bounds.map((b) => (
         <g key={b.name}>
@@ -123,8 +138,8 @@ export function SessionSummary(p: { session: StressSession; beats: readonly Beat
       {session.series && (
         <dl class="ss-stats">
           <div><dt>Resting</dt><dd class="ax-mono">{n.restHr != null ? Math.round(n.restHr) : '–'}<small>bpm</small></dd></div>
-          <div><dt>Rise in challenge</dt><dd class="ax-mono">{n.hrRise != null ? `${n.hrRise >= 0 ? '+' : '−'}${Math.abs(Math.round(n.hrRise))}` : '–'}<small>bpm</small></dd></div>
-          <div><dt>Halfway back</dt><dd class="ax-mono">{n.recoveryHalfTimeS != null ? n.recoveryHalfTimeS : '–'}<small>{n.recoveryHalfTimeS != null ? 's' : ''}</small></dd></div>
+          <div><dt>Challenge</dt><dd class="ax-mono">{n.hrRise != null ? `${n.hrRise >= 0 ? '+' : '−'}${Math.abs(Math.round(n.hrRise))}` : '–'}<small>bpm</small></dd></div>
+          <div><dt>Back halfway</dt><dd class="ax-mono">{n.recoveryHalfTimeS != null ? n.recoveryHalfTimeS : '–'}<small>{n.recoveryHalfTimeS != null ? 's' : ''}</small></dd></div>
         </dl>
       )}
       <p class="ss-text">{session.summary.text}</p>
@@ -138,7 +153,7 @@ export function SessionSummary(p: { session: StressSession; beats: readonly Beat
               return (
                 <li key={i}>
                   <span><b>{activityById(a.activity).name}</b><span class="ax-small"> · {ph}</span></span>
-                  {l && <span class="ax-mono">{l.label}: {formatMetric(l, a.metrics[l.key])}{l.unit ? ` ${l.unit}` : ''}{w ? ` (${w.toLowerCase()})` : ''}</span>}
+                  {l && <span class="ss-act-m">{l.label} <b class="ax-mono">{formatMetric(l, a.metrics[l.key])}</b>{l.unit ? ` ${l.unit}` : ''}{w ? ` · ${w.toLowerCase()}` : ''}</span>}
                 </li>
               );
             })}
