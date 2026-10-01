@@ -77,6 +77,7 @@ export function SteadyHand(props: RunProps) {
   };
   if (f.phase === 'intro' || perm === 'no-sensor' || perm === 'denied') {
     const blocked = perm === 'no-sensor' || perm === 'denied';
+    const likelyDesktop = typeof matchMedia !== 'undefined' && matchMedia('(pointer: fine)').matches && !matchMedia('(any-pointer: coarse)').matches;
     return (
       <Intro meta={steadyMeta} lengthS={f.durationS} onCancel={props.onCancel}
         onStart={perm === 'needs-permission' ? ask : () => { setPerm('ok'); f.start(); }}
@@ -85,13 +86,13 @@ export function SteadyHand(props: RunProps) {
         measures="Small, fast shakes in your hand (tremor) from the phone's motion sensor, and their frequency."
         keeps="Tremor numbers only."
         needs="A phone. Laptops and desktops have no motion sensor."
-        extra={blocked && (
+        extra={blocked ? (
           <p class="ax-note" role="alert">
             {perm === 'denied'
               ? 'Motion access was not allowed. On iPhone, close this tab and open it again to be asked once more, or allow Motion & Orientation Access in Settings > Safari.'
               : 'This device has no motion sensor. Open SafeSpace on your phone to do this one.'}
           </p>
-        )} />
+        ) : likelyDesktop ? <p class="ax-note">This looks like a computer. Most have no motion sensor, so this one is best done on your phone.</p> : null} />
     );
   }
   if (f.phase === 'run') return <Run key={f.runKey} durationS={f.durationS} embedded={props.embedded} onEnd={f.finish} onNoSensor={() => setPerm('no-sensor')} />;
