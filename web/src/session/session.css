@@ -42,6 +42,6 @@
 @media (max-width: 420px) { .ss-stats dd { font-size: 24px; } .ss-stats > div { padding-left: 10px; } }
 .ss-text { font-size: 16px; line-height: 1.55; max-width: 62ch; text-wrap: pretty; }
 .ss-acts ul { border-top: 1px solid var(--ink); margin-top: 8px; }
-.ss-acts li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
+.ss-acts li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; }
 .ss-act-m { font-size: 14px; color: var(--ink-2); }
 .ss-act-m b { font-weight: 400; color: var(--ink); }

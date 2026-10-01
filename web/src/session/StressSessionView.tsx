@@ -164,7 +164,8 @@ export function StressSessionView(p: StressSessionViewProps) {
   const totalS = plan.reduce((a, s) => a + s.durationS, 0);
   const [stage, setStage] = useState<'intro' | 'run' | 'summary'>(p.startAt != null ? 'run' : 'intro');
   const [step, setStep] = useState(p.startAt ?? 0);
-  const startedAt = useRef(Date.now());
+  // With startAt (playground), pretend the earlier steps already ran so the timeline lines up.
+  const startedAt = useRef(Date.now() - (p.startAt ? plan.slice(0, p.startAt).reduce((a, s) => a + s.durationS, 0) * 1000 : 0));
   const stepStarts = useRef<number[]>(p.startAt != null ? plan.slice(0, p.startAt + 1).map(() => Date.now()) : []);
   const results = useRef<{ step: number; r: ActivityResult }[]>([]);
   const [session, setSession] = useState<StressSession | null>(null);
@@ -272,7 +273,7 @@ export function StressSessionView(p: StressSessionViewProps) {
     <section class="ax ax-sheet ss-run" aria-labelledby="ss-step">
       <div class="ax-head">
         <div class="ax-headtext">
-          <span class="ax-kicker">Stress session · {PHASES[phaseIdx].label}</span>
+          <span class="ax-kicker">Stress session</span>
           <span class="ax-name" id="ss-step">{STEP_NAME[cur.kind]}</span>
         </div>
         {p.live && <span class="ss-hr-now" aria-label="Heart rate"><span class="ax-mono">{lastBeat ? lastBeat.hr : '–'}</span><small>bpm</small></span>}
