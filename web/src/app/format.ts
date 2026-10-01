@@ -32,6 +32,7 @@ export function ago(t: number, now = Date.now()): string {
   if (s < 45) return 'just now';
   if (s < 3600) return `${Math.round(s / 60)} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return relDay(t, now).toLowerCase();
+  const r = relDay(t, now);
+  return r === 'Today' || r === 'Yesterday' ? r.toLowerCase() : `on ${r}`;
 }
 export const plural = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;

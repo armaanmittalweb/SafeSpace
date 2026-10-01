@@ -10,21 +10,39 @@ import { avg, dayScore, dayStyle, download, Legend } from '../ui';
 import { vault } from '../vault';
 import { ResultView } from './Result';
 
+/** Calendar: by default the last five weeks (so the 1st of a month is never a blank page); the arrows step
+ * through calendar months. `month` null = the rolling view. */
 function MonthCalendar({ checkins, month, onMonth, selected, onSelect, now }: {
-  checkins: CheckIn[]; month: Date; onMonth(d: Date): void; selected: number | null; onSelect(d: number | null): void; now: number;
+  checkins: CheckIn[]; month: Date | null; onMonth(d: Date | null): void; selected: number | null; onSelect(d: number | null): void; now: number;
 }) {
-  const first = new Date(month.getFullYear(), month.getMonth(), 1).getTime();
-  const lead = (new Date(first).getDay() + 6) % 7;
-  const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-  const cells: (number | null)[] = [...Array(lead).fill(null), ...Array.from({ length: days }, (_, i) => addDays(first, i))];
-  const canNext = new Date(month.getFullYear(), month.getMonth() + 1, 1).getTime() <= now;
+  let cells: (number | null)[];
+  let title: string;
+  let prev: Date, next: Date | null;
+  if (!month) {
+    const start = addDays(startOfWeek(now), -28);
+    cells = Array.from({ length: 35 }, (_, i) => addDays(start, i));
+    title = 'Last five weeks';
+    const s = new Date(addDays(start, -1));
+    prev = new Date(s.getFullYear(), s.getMonth(), 1);
+    next = null;
+  } else {
+    const first = new Date(month.getFullYear(), month.getMonth(), 1).getTime();
+    const lead = (new Date(first).getDay() + 6) % 7;
+    const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    cells = [...Array(lead).fill(null), ...Array.from({ length: days }, (_, i) => addDays(first, i))];
+    title = `${MONTHS[month.getMonth()]} ${month.getFullYear()}`;
+    prev = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    const n = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+    next = n.getTime() > addDays(startOfWeek(now), -28) ? null : n;
+  }
+  const canNext = month != null;
   return (
     <section class="card" aria-labelledby="cal-h">
       <div class="card-head">
-        <h2 id="cal-h" class="card-title">{MONTHS[month.getMonth()]} {month.getFullYear()}</h2>
+        <h2 id="cal-h" class="card-title">{title}</h2>
         <div class="cal-nav">
-          <button type="button" class="icon-btn" aria-label="Previous month" onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><IconBack /></button>
-          <button type="button" class="icon-btn" aria-label="Next month" disabled={!canNext} onClick={() => onMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}><IconChevron /></button>
+          <button type="button" class="icon-btn" aria-label="Previous month" onClick={() => onMonth(prev)}><IconBack /></button>
+          <button type="button" class="icon-btn" aria-label="Next month" disabled={!canNext} onClick={() => onMonth(next)}><IconChevron /></button>
         </div>
       </div>
       <div class="cal" role="grid" aria-labelledby="cal-h">
@@ -128,9 +146,8 @@ function Row({ c }: { c: CheckIn }) {
 export function History() {
   const s = useApp();
   const now = Date.now();
-  const [month, setMonth] = useState(() => new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1));
+  const [month, setMonth] = useState<Date | null>(null);
   const [day, setDay] = useState<number | null>(null);
-  const [browsing, setBrowsing] = useState(false);
   const [tag, setTag] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const all = s.checkins;
@@ -143,7 +160,7 @@ export function History() {
   // Until someone moves the calendar, the list is simply the most recent check-ins (the 1st of a month is not empty).
   const recentCut = addDays(startOfDay(now), -30);
   const shown = day != null ? filtered.filter((c) => sameDay(c.createdAt, day))
-    : browsing ? filtered.filter((c) => { const d = new Date(c.createdAt); return d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth(); })
+    : month ? filtered.filter((c) => { const d = new Date(c.createdAt); return d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth(); })
     : filtered.filter((c) => c.createdAt >= recentCut);
   const groups = useMemo(() => {
     const g = new Map<number, CheckIn[]>();
@@ -200,16 +217,16 @@ export function History() {
 
       <div class="history">
         <div class="history-side">
-          <MonthCalendar checkins={filtered} month={month} onMonth={(m) => { setMonth(m); setDay(null); setBrowsing(true); }} selected={day} onSelect={setDay} now={now} />
+          <MonthCalendar checkins={filtered} month={month} onMonth={(m) => { setMonth(m); setDay(null); }} selected={day} onSelect={setDay} now={now} />
           <WeekSummary checkins={all} now={now} />
           <TagTrends checkins={all} onTag={(t) => setTag(t)} />
         </div>
         <section class="history-list" aria-labelledby="list-h">
           <div class="list-head">
-            <h2 id="list-h" class="card-title">{day != null ? longDate(day) : browsing ? MONTHS[month.getMonth()] : 'Last 30 days'}{tag ? ` · ${tag}` : ''}</h2>
-            {(day != null || tag || browsing) && <button type="button" class="link" onClick={() => { setDay(null); setTag(null); setBrowsing(false); setMonth(new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1)); }}>Show recent</button>}
+            <h2 id="list-h" class="card-title">{day != null ? longDate(day) : month ? MONTHS[month.getMonth()] : 'Last 30 days'}{tag ? ` · ${tag}` : ''}</h2>
+            {(day != null || tag || month) && <button type="button" class="link" onClick={() => { setDay(null); setTag(null); setMonth(null); }}>Show recent</button>}
           </div>
-          {groups.length === 0 ? <p class="muted pad">No check-ins {tag ? `tagged "${tag}" ` : ''}{browsing ? `in ${MONTHS[month.getMonth()]}` : 'in the last 30 days'}.</p> : groups.map(([d, cs]) => (
+          {groups.length === 0 ? <p class="muted pad">No check-ins {tag ? `tagged "${tag}" ` : ''}{month ? `in ${MONTHS[month.getMonth()]}` : 'in the last 30 days'}.</p> : groups.map(([d, cs]) => (
             <div class="day-group">
               <h3 class="kicker day-label">{/\d/.test(relDay(d, now)) ? longDate(d) : `${relDay(d, now)} · ${dayMonth(d)}`}</h3>
               <ul class="hlist">{cs.map((c) => <Row c={c} />)}</ul>

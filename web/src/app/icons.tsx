@@ -16,7 +16,7 @@ export const IconBack = (p: P) => <Svg {...p}><path d="M14.5 5.5 8 12l6.5 6.5" /
 export const IconClose = (p: P) => <Svg {...p}><path d="M6 6l12 12M18 6 6 18" /></Svg>;
 export const IconChevron = (p: P) => <Svg {...p}><path d="M9.5 5.5 16 12l-6.5 6.5" /></Svg>;
 export const IconCamera = (p: P) => <Svg {...p}><rect x="3" y="6.5" width="18" height="13" rx="2.5" /><path d="M8.5 6.5 10 4h4l1.5 2.5" /><circle cx="12" cy="13" r="3.5" /></Svg>;
-export const IconStrap = (p: P) => <Svg {...p}><path d="M2.5 12c3-2.5 6-3.5 9.5-3.5s6.5 1 9.5 3.5" /><rect x="8.5" y="9.5" width="7" height="5" rx="1.5" /><path d="M2.5 12c3 2.5 6 3.5 9.5 3.5" opacity=".5" /></Svg>;
+export const IconStrap = (p: P) => IconDevices(p);
 export const IconFile = (p: P) => <Svg {...p}><path d="M6.5 3h7l4 4v14h-11z" /><path d="M13.5 3v4h4M9 12.5h6M9 16h6" /></Svg>;
 export const IconFeel = (p: P) => <Svg {...p}><path d="M4 18h16" /><path d="M6 18v-3M9.5 18v-6M13 18v-9M16.5 18v-5" /></Svg>;
 export const IconCheck = (p: P) => <Svg {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>;

@@ -84,7 +84,12 @@ export function ResultView({ c, baseline, baselineCount, children }: { c: CheckI
         <section class="card quiet" aria-labelledby="nm-h">
           <h2 id="nm-h" class="kicker">Not measured</h2>
           <ul class="nm-list">
-            {notUsed.map((n) => <li><b>{SIGNAL_LABEL[n.signal]}.</b> {n.reason}</li>)}
+            {notUsed.filter((n) => n.signal === 'hr' || n.signal === 'hrv').map((n) => <li><b>{SIGNAL_LABEL[n.signal]}.</b> {n.reason}</li>)}
+            {(() => {
+              const w = notUsed.filter((n) => n.signal === 'eda' || n.signal === 'temp');
+              if (w.length === 2 && w[0].reason === w[1].reason) return <li><b>Skin conductance and skin temperature.</b> A phone camera cannot see them; they need a wearable such as an Empatica E4.</li>;
+              return w.map((n) => <li><b>{SIGNAL_LABEL[n.signal]}.</b> {n.reason}</li>);
+            })()}
           </ul>
         </section>
       )}

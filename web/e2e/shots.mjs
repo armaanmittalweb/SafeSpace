@@ -82,7 +82,7 @@ const scenarios = [
     await p.goto(`${BASE}/check-in?fake=denied&seed=sample`); await startCamera(p);
     await p.waitForSelector('.state'); await wait(p); await shot('checkin-camera-denied');
     await p.goto(`${BASE}/check-in?fake=poor&dur=8&seed=sample`); await startCamera(p);
-    await p.waitForSelector('.measuring'); await wait(p, 5000); await shot('checkin-measuring-poor');
+    await p.waitForSelector('.measuring'); await wait(p, 13000); await shot('checkin-measuring-poor');
     await p.waitForSelector('.state', { timeout: 30000 }); await wait(p); await shot('checkin-poor-signal');
     await p.goto(`${BASE}/baseline?${F}&seed=base1`); await p.waitForSelector('.prepare'); await wait(p); await shot('baseline-prepare');
     await p.click('button:has-text("Start the 60-second")'); await p.waitForSelector('.baseline-figs', { timeout: 30000 }); await wait(p); await shot('baseline-done');

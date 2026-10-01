@@ -61,18 +61,18 @@ function useAvailability(inputs: AnyInput[]) {
   return av;
 }
 
-/** A phone from behind: the fingertip covers the lens and the flash. */
+/** The back of a phone: one fingertip covers both the lens and the flash. Labels sit outside, on leader lines. */
 function FingerDiagram() {
   return (
-    <svg class="finger" viewBox="0 0 160 150" aria-hidden="true">
-      <rect x="30" y="8" width="100" height="160" rx="16" fill="var(--card)" stroke="var(--ink)" stroke-width="1.5" />
-      <rect x="42" y="20" width="40" height="46" rx="10" fill="none" stroke="var(--line)" stroke-width="1.2" />
-      <circle cx="56" cy="34" r="7" fill="none" stroke="var(--ink)" stroke-width="1.5" />
-      <circle cx="56" cy="34" r="2.5" fill="var(--ink)" />
-      <circle cx="56" cy="54" r="4" fill="none" stroke="var(--ink)" stroke-width="1.2" />
-      <text x="70" y="57" font-size="7" fill="var(--muted)" font-family="var(--mono)">FLASH</text>
-      <text x="67" y="30" font-size="7" fill="var(--muted)" font-family="var(--mono)">LENS</text>
-      <path d="M36 150 C36 110 40 64 50 34 C54 22 66 22 68 34 C72 60 70 110 74 150" fill="var(--stress)" fill-opacity=".14" stroke="var(--ink)" stroke-width="1.3" stroke-dasharray="3 2.5" />
+    <svg class="finger" viewBox="0 0 240 150" aria-hidden="true">
+      <path d="M50 150 V22 a18 18 0 0 1 18 -18 h76 a18 18 0 0 1 18 18 V150" fill="var(--card)" stroke="var(--ink)" stroke-width="1.5" />
+      <rect x="62" y="16" width="44" height="62" rx="12" fill="none" stroke="var(--line)" stroke-width="1.2" />
+      <circle cx="84" cy="34" r="9" fill="none" stroke="var(--ink)" stroke-width="1.5" />
+      <circle cx="84" cy="34" r="3" fill="var(--ink)" />
+      <circle cx="84" cy="60" r="5" fill="none" stroke="var(--ink)" stroke-width="1.3" />
+      <path d="M66 150 C64 108 66 52 72 30 C76 14 94 14 97 30 C102 56 102 108 100 150" fill="var(--stress)" fill-opacity=".13" stroke="var(--ink)" stroke-width="1.3" stroke-dasharray="4 3" />
+      <path d="M94 34 H176" stroke="var(--line)" /><text x="180" y="37" class="lbl">LENS</text>
+      <path d="M90 60 H176" stroke="var(--line)" /><text x="180" y="63" class="lbl">FLASH</text>
     </svg>
   );
 }
@@ -136,7 +136,7 @@ function Measuring({ conn, onDone, onCancel, onFail }: { conn: LiveConnection; o
       <div class="flow-content">
         <div class="live-top">
           <div class="live-hr">
-            <span class={`num num-hero ${hr ? '' : 'placeholder'}`} aria-hidden="true">{hr ? Math.round(hr) : '--'}</span>
+            <span class={`num num-hero ${hr ? '' : 'placeholder'}`} aria-hidden="true">{hr ? Math.round(hr) : '—'}</span>
             <span class="live-unit">bpm<span class="muted"> · heart rate, live</span></span>
             <span class="sr-only">{hr ? `${Math.round(hr)} beats per minute` : 'Finding your pulse'}</span>
           </div>

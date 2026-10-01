@@ -229,6 +229,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .chip.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .filter { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 16px; padding: 2px 16px 6px; scrollbar-width: none; }
 .filter::-webkit-scrollbar { display: none; }
+.filter .chip { font-size: 14px; padding: 0 14px; }
 .tag-add { display: flex; gap: 8px; }
 .tag-add input { flex: 1; }
 
@@ -386,7 +387,8 @@ button.option:hover:not(:disabled) { border-color: var(--ink); }
 .option .chev { margin-left: auto; color: var(--muted); flex: none; }
 .option.static { min-height: 0; background: transparent; border-style: dashed; }
 
-.prepare .finger { display: block; width: 120px; height: 112px; margin: 0 auto 8px; overflow: hidden; }
+.prepare .finger { display: block; width: 100%; max-width: 280px; height: auto; margin: 8px auto 12px; }
+.finger .lbl { font: 500 10px var(--mono); letter-spacing: 0.1em; fill: var(--muted); }
 .howto { counter-reset: s; display: flex; flex-direction: column; gap: 12px; margin: 16px 0 18px; }
 .howto li { counter-increment: s; position: relative; padding-left: 36px; font-size: 15.5px; line-height: 1.45; color: var(--ink-2); }
 .howto li::before {
@@ -536,7 +538,7 @@ button.option:hover:not(:disabled) { border-color: var(--ink); }
 @media (min-width: 900px) { .job-grid { grid-template-columns: 1fr 1fr; } }
 
 .dev-row { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 16px 14px 18px; }
-.dev-icon { color: var(--ink-2); display: grid; }
+.dev-icon { color: var(--ink-2); display: grid; align-self: start; padding-top: 1px; }
 .dev-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dev-main b { font-size: 15.5px; font-weight: 600; }
 .dev-main small { font-size: 13.5px; line-height: 1.4; }

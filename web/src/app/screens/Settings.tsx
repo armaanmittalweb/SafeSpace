@@ -73,7 +73,7 @@ export function Settings() {
         <h2 id="acc-h" class="section-title">Account</h2>
         <div class="card list-card">
           <div class="row"><div class="row-text"><span class="row-label">Email</span><p class="row-hint">{me?.user.email}</p></div></div>
-          <div class="row"><div class="row-text"><span class="row-label">Sync</span><SyncLine s={s.sync} signedIn /></div>
+          <div class="row"><div class="row-text"><span class="row-label">Sync</span><div class="row-hint"><SyncLine s={s.sync} signedIn /></div></div>
             <button type="button" class="btn secondary small" disabled={!s.sync.online || s.sync.syncing} onClick={() => void vault.sync()}>Sync now</button></div>
           <div class="row col">
             <div class="row-line"><span class="row-label">Password</span>{open !== 'password' && <button type="button" class="btn secondary small" onClick={() => setOpen('password')}>Change</button>}</div>

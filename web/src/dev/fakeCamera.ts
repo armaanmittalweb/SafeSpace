@@ -16,7 +16,7 @@ export function fakeCamera(mode: string, bpm: number): LiveInput {
     async connect() {
       if (mode === 'denied') throw new DOMException('Permission denied', 'NotAllowedError');
       const noise = mode === 'fair' ? 0.3 : 0.05;
-      const s = synth({ bpm, seconds: 240, fps: 30, noise, wander: 0.6, seed: 11, motion: mode === 'poor' ? { at: 2, dur: 200 } : undefined });
+      const s = synth({ bpm, seconds: 240, fps: 30, noise, wander: 0.6, seed: 11, motion: mode === 'poor' ? { at: 9.5, dur: 200 } : undefined });
       return pulseConnection({
         device: 'Rear camera with flash',
         torch: true,
