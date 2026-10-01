@@ -3,7 +3,6 @@ import { Link } from '../router';
 import { sampleData } from '../sample';
 import { Stamp } from '../ui';
 import { TodayView } from './Today';
-import { longDate } from '../format';
 
 export function Landing() {
   const now = Date.now();
@@ -12,7 +11,7 @@ export function Landing() {
     <div class="landing">
       <section class="landing-top" aria-labelledby="l-h">
         <div class="landing-intro">
-          <h1 id="l-h">A stress check-in you can take with your phone.</h1>
+          <h1 id="l-h">A stress <span class="nowrap">check-in</span> you can take with your phone.</h1>
           <p class="lead">Rest a fingertip on the camera for 60 seconds. SafeSpace reads your pulse, compares it with your own resting baseline, and tells you plainly what it saw and what it could not measure.</p>
           <div class="actions">
             <Link href="/check-in" class="btn primary">Try a check-in</Link>
@@ -23,7 +22,7 @@ export function Landing() {
         <figure class="sample-frame" aria-labelledby="sample-cap">
           <figcaption id="sample-cap" class="sample-cap">
             <Stamp>Sample</Stamp>
-            <span>Asha's week, as she sees it · {longDate(now)}</span>
+            <span>Asha's Today screen, five weeks in</span>
           </figcaption>
           <div class="sample-body" inert>
             <TodayView checkins={sample.checkins} baseline={sample.baseline} sample now={now} />

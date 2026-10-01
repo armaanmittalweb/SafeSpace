@@ -3,7 +3,7 @@ import type { AnyInput, LiveConnection, LiveInput } from '../../contract/inputs'
 import type { CheckIn, Measurement, Quality } from '../../contract/records';
 import { IconBack, IconCamera, IconChevron, IconClose, IconFeel, IconStrap } from '../icons';
 import { factsOf, templateNote } from '../notes';
-import { INPUTS } from '../ports';
+import { FAKE, INPUTS } from '../ports';
 import { Link, navigate } from '../router';
 import { baselineFrom, baselineHasToday, baselineReady, BASELINE_NEEDED, FEELINGS, scoreMeasurement } from '../scoring';
 import { connectDevice, getState, setGuest, toast, useApp } from '../store';
@@ -11,7 +11,12 @@ import { QualityMeter, Trace } from '../ui';
 import { vault } from '../vault';
 import { ResultView } from './Result';
 
-const DURATION = 60;
+/** 60 s; fake-mode builds accept `&dur=` so screenshots do not wait a minute. */
+const DURATION = (() => {
+  if (!FAKE) return 60;
+  const d = Number(new URLSearchParams(location.search).get('dur'));
+  return d >= 5 && d <= 60 ? d : 60;
+})();
 type Mode = 'checkin' | 'baseline';
 type Step =
   | { k: 'choose' }
@@ -40,11 +45,11 @@ function failure(e: unknown, input: AnyInput): { title: string; body: string; re
   return { title: 'Something went wrong', body: (e as Error)?.message || 'The measurement could not start.', retry: true };
 }
 
-function Bar({ title, onBack, onClose }: { title: string; onBack?: () => void; onClose?: () => void }) {
+function Bar({ title, onBack, onClose, h1 }: { title: string; onBack?: () => void; onClose?: () => void; h1?: boolean }) {
   return (
     <header class="flow-bar">
       {onBack ? <button type="button" class="icon-btn" aria-label="Back" onClick={onBack}><IconBack /></button> : <span class="icon-btn-space" />}
-      <span class="flow-title">{title}</span>
+      {h1 ? <h1 class="flow-title">{title}</h1> : <span class="flow-title">{title}</span>}
       {onClose ? <button type="button" class="icon-btn" aria-label="Cancel" onClick={onClose}><IconClose /></button> : <span class="icon-btn-space" />}
     </header>
   );
@@ -93,43 +98,60 @@ function Prepare({ mode, input, onStart, onBack }: { mode: Mode; input: LiveInpu
   );
 }
 
+/** Waits until the pulse is found (signal fair or better for 2 s), then records DURATION seconds. */
 function Measuring({ conn, onDone, onCancel, onFail }: { conn: LiveConnection; onDone(m: Measurement): void; onCancel(): void; onFail(e: unknown): void }) {
   const [q, setQ] = useState<{ q: Quality; why: string | null }>({ q: 'poor', why: 'Starting up' });
   const [hr, setHr] = useState<number | null>(null);
   const [beats, setBeats] = useState<number[]>([]);
-  const [left, setLeft] = useState(DURATION);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const opened = useRef(Date.now());
+  const okSince = useRef<number | null>(null);
   const ac = useRef(new AbortController());
   useEffect(() => {
-    const t0 = Date.now();
-    const u1 = conn.onQuality((qq, why) => setQ({ q: qq, why }));
+    const u1 = conn.onQuality((qq, why) => { setQ({ q: qq, why }); okSince.current = qq === 'poor' ? null : okSince.current ?? Date.now(); });
     const u2 = conn.onBeat((b) => { setHr(b.hr); setBeats((bs) => [...bs.slice(-30), b.t]); });
-    const iv = setInterval(() => setLeft(Math.max(0, DURATION - Math.floor((Date.now() - t0) / 1000))), 250);
-    conn.measure(DURATION, ac.current.signal).then(onDone, (e) => { if ((e as DOMException).name !== 'AbortError') onFail(e); });
+    const iv = setInterval(() => {
+      setNow(Date.now());
+      // A strap has no warm-up; the camera waits for a finger and a steady pulse.
+      const ready = !conn.onSample || (okSince.current != null && Date.now() - okSince.current >= 2000);
+      setStartedAt((s) => {
+        if (s != null || !ready) return s;
+        conn.measure(DURATION, ac.current.signal).then(onDone, (e) => { if ((e as DOMException).name !== 'AbortError') onFail(e); });
+        return Date.now();
+      });
+    }, 250);
     return () => { u1(); u2(); clearInterval(iv); ac.current.abort(); };
   }, [conn]);
   const sub = useMemo(() => conn.onSample ?? (() => () => {}), [conn]);
-  const tip = q.why && q.why !== 'Starting up' ? q.why : q.q === 'good' ? 'Good. Keep still and breathe normally.' : 'Keep your fingertip still over the lens and flash.';
+  const left = startedAt == null ? DURATION : Math.max(0, DURATION - Math.floor((now - startedAt) / 1000));
+  const finding = startedAt == null;
+  const tip = finding
+    ? (q.why && q.why !== 'Starting up' && q.q === 'poor' ? q.why : 'Finding your pulse. The minute starts once it is steady.')
+    : q.why ?? (q.q === 'good' ? 'Good. Keep still and breathe normally.' : 'Keep your fingertip still over the lens and flash.');
+  const slow = finding && now - opened.current > 20000;
   return (
     <div class="flow-body measuring">
-      <Bar title="Measuring" onClose={() => { ac.current.abort(); onCancel(); }} />
+      <Bar h1 title={finding ? 'Getting ready' : 'Measuring'} onClose={() => { ac.current.abort(); onCancel(); }} />
       <div class="flow-content">
         <div class="live-top">
           <div class="live-hr">
-            <span class="num num-hero" aria-hidden="true">{hr ? Math.round(hr) : '--'}</span>
+            <span class={`num num-hero ${hr ? '' : 'placeholder'}`} aria-hidden="true">{hr ? Math.round(hr) : '--'}</span>
             <span class="live-unit">bpm<span class="muted"> · heart rate, live</span></span>
-            <span class="sr-only" aria-live="off">{hr ? `${Math.round(hr)} beats per minute` : 'Finding your pulse'}</span>
+            <span class="sr-only">{hr ? `${Math.round(hr)} beats per minute` : 'Finding your pulse'}</span>
           </div>
           <QualityMeter q={q.q} why={q.why} />
         </div>
         <div class="paper-frame">
-          {conn.onSample ? <Trace subscribe={sub} beats={beats} /> : <div class="trace no-wave"><p class="muted">{conn.device} sends beats, not a waveform.</p></div>}
-          <div class="timeline" role="progressbar" aria-label="Time left" aria-valuemin={0} aria-valuemax={DURATION} aria-valuenow={DURATION - left} aria-valuetext={`${left} seconds left`}>
+          {conn.onSample ? <Trace subscribe={sub} beats={beats} height={180} /> : <div class="trace no-wave"><p class="muted">{conn.device} sends beats, not a waveform.</p></div>}
+          <div class="timeline" role="progressbar" aria-label="Time left" aria-valuemin={0} aria-valuemax={DURATION} aria-valuenow={DURATION - left} aria-valuetext={finding ? 'Not started' : `${left} seconds left`}>
             {Array.from({ length: 30 }, (_, i) => <i class={i < Math.floor(((DURATION - left) / DURATION) * 30) ? 'on' : ''} />)}
           </div>
-          <div class="timeline-label"><span class="mono">{`0:${String(left).padStart(2, '0')}`}</span><span class="muted">left</span></div>
+          <div class="timeline-label"><span class="mono">{`${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`}</span><span class="muted">{finding ? 'starts when your pulse is steady' : 'left'}</span></div>
         </div>
         <p class={`live-tip ${q.q}`} aria-live="polite">{tip}</p>
-        <p class="fine">{conn.device}</p>
+        {slow && <p class="muted small">Still nothing? Warm your hand, rest the phone on a table, and cover both the lens and the flash with the pad of one finger.</p>}
+        <p class="fine device-note">{conn.device}</p>
       </div>
     </div>
   );
@@ -378,7 +400,7 @@ export function CheckInFlow({ mode }: { mode: Mode }) {
     case 'result':
       return (
         <div class="flow-body">
-          <Bar title="Result" onBack={() => setStep({ k: 'tags' })} />
+          <Bar h1 title="Result" onBack={() => setStep({ k: 'tags' })} />
           <div class="flow-content wide">
             <ResultView c={checkin} baseline={s.baseline} baselineCount={s.baseline?.calibration.n ?? 0} />
           </div>

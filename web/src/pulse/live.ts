@@ -12,7 +12,7 @@ export interface FramePump {
   start(onFrame: (f: Frame) => void, onMotion: (m: MotionSample) => void, onEnded: () => void): () => void;
 }
 
-const LIVE_WINDOW_MS = 8000;
+const LIVE_WINDOW_MS = 6000;
 const TICK_MS = 500;
 const KEEP_MS = 90_000;
 
@@ -36,7 +36,8 @@ export function pulseConnection(pump: FramePump): LiveConnection {
     const dt = Number.isFinite(lastT) ? Math.min(0.2, (f.t - lastT) / 1000) : 1 / 30;
     lastT = f.t;
     const x = -f.r;
-    if (!Number.isFinite(slow)) { slow = x; fast = 0; }
+    // a finger going on or off the lens is a step, not a pulse: restart the baseline there
+    if (!Number.isFinite(slow) || Math.abs(x - slow) > 25) { slow = x; fast = 0; }
     slow += (x - slow) * (1 - Math.exp(-dt / 1.2));
     fast += (x - slow - fast) * (1 - Math.exp(-dt / 0.07));
     for (const cb of sampleCbs) cb({ t: f.t, v: fast });

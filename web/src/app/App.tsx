@@ -126,16 +126,16 @@ export function App() {
     case path === '/signup': return inApp && !s.recoveryKey ? redirect('/') : <PublicShell><SignUp /></PublicShell>;
     case path === '/recover': return inApp ? redirect('/') : <PublicShell><Recover /></PublicShell>;
     case path === '/welcome': return needIn(<PublicShell bar={false}><Welcome /></PublicShell>);
-    case path === '/check-in': return <div class="flow-shell"><CheckInFlow mode="checkin" /><Toast /></div>;
-    case path === '/baseline': return needIn(<div class="flow-shell"><CheckInFlow mode="baseline" /><Toast /></div>);
+    case path === '/check-in': return <div class="flow-shell"><main id="main"><CheckInFlow mode="checkin" /></main><Toast /></div>;
+    case path === '/baseline': return needIn(<div class="flow-shell"><main id="main"><CheckInFlow mode="baseline" /></main><Toast /></div>);
     case path === '/history': return needIn(<TabShell path={path}><History /></TabShell>);
     case path.startsWith('/history/'): return needIn(<TabShell path={path}><CheckInDetail id={decodeURIComponent(path.slice(9))} /></TabShell>);
     case path === '/activities':
       return inApp ? <TabShell path={path}><Activities /></TabShell> : <PublicShell><Activities /></PublicShell>;
     case path === '/activities/session':
-      return <div class="flow-shell"><SessionRun /><Toast /></div>;
+      return <div class="flow-shell"><main id="main"><SessionRun /></main><Toast /></div>;
     case path.startsWith('/activities/'):
-      return <div class="flow-shell"><ActivityRun id={path.slice(12)} /><Toast /></div>;
+      return <div class="flow-shell"><main id="main"><ActivityRun id={path.slice(12)} /></main><Toast /></div>;
     case path === '/devices':
       return inApp ? <TabShell path={path}><Devices /></TabShell> : <PublicShell><Devices /></PublicShell>;
     case path === '/settings': return needIn(<TabShell path={path}><Settings /></TabShell>);

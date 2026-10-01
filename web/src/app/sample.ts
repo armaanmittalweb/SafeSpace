@@ -30,6 +30,8 @@ const KINDS: Plan[] = [
   { tags: ['lab report'], dhr: 6, drm: -6, feeling: 3, h: 15 },
 ];
 
+const wdMon = (t: number) => (new Date(t).getDay() + 6) % 7;
+
 export function sampleData(now = Date.now(), seed = 5): { baseline: Baseline; checkins: CheckIn[] } {
   const R = rng(seed);
   const today = startOfDay(now);
@@ -40,9 +42,10 @@ export function sampleData(now = Date.now(), seed = 5): { baseline: Baseline; ch
     const day = addDays(today, d);
     const wd = new Date(day).getDay();
     // an exam week three weeks in, gym on Tue/Thu, quiet weekends, a few empty days
-    if (d === -1 || (R() < 0.15 && d !== 0)) continue;
+    const thisWeek = d >= -((wdMon(now)));
+    if (!thisWeek && R() < 0.18) continue;
     const plans: Plan[] = [];
-    if (d === 0) plans.push(KINDS[0]);
+    if (d === 0) plans.push({ ...KINDS[0], h: -1 });
     else if (d >= -12 && d <= -9) plans.push(KINDS[1], KINDS[4]);
     else if (d === -4) plans.push(KINDS[3]);
     else if (wd === 2 || wd === 4) plans.push(KINDS[2]);
@@ -50,7 +53,8 @@ export function sampleData(now = Date.now(), seed = 5): { baseline: Baseline; ch
     else plans.push(R() < 0.5 ? KINDS[0] : KINDS[6]);
     if (R() < 0.35 && d !== 0) plans.push(KINDS[4]);
     for (const p of plans) {
-      const t = at(day, p.h, Math.floor(R() * 50));
+      // today's check-in happened 40 minutes ago, whatever the time now
+      const t = p.h < 0 ? now - 40 * 60_000 : at(day, p.h, Math.floor(R() * 50));
       if (t > now) continue;
       const m = reading(t, 72.5 + p.dhr + (R() - 0.5) * 4, Math.max(18, 48 + p.drm + (R() - 0.5) * 8), p.q ?? (R() < 0.12 ? 'fair' : 'good'));
       const c: CheckIn = {

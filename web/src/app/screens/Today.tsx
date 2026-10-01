@@ -2,9 +2,9 @@ import type { Baseline, CheckIn } from '../../contract/records';
 import { DAYS_LONG, fmtSigned, longDate, plural, relDay, sameDay, startOfWeek, time } from '../format';
 import { IconChevron, IconStrap, IconToday } from '../icons';
 import { Link } from '../router';
-import { baselineHasToday, baselineReady, BASELINE_NEEDED, feelingWord, levelOf, LEVEL_TEXT } from '../scoring';
+import { baselineHasToday, baselineReady, BASELINE_NEEDED, feelingWord } from '../scoring';
 import { useApp } from '../store';
-import { avg, Legend, ScoreFigure, ScoreScale, SyncLine, WeekStrip } from '../ui';
+import { avg, Legend, ScoreFigure, ScoreScale, SyncLine, TrendChart, WeekStrip } from '../ui';
 
 const DAY = 864e5;
 
@@ -102,11 +102,17 @@ export function TodayView({ checkins, baseline, sample = false, now = Date.now()
         <section class="card" aria-labelledby="wk-h">
           <div class="card-head">
             <h2 id="wk-h" class="kicker">This week</h2>
-            {wk != null && <span class="kicker">avg <span class="mono">{fmtSigned(wk)}</span> · {LEVEL_TEXT[levelOf(wk)].toLowerCase()}</span>}
+            {wk != null && <span class="kicker">avg {fmtSigned(wk)}</span>}
           </div>
           <WeekStrip checkins={checkins} now={now} />
           <Legend />
         </section>
+        {checkins.some((c) => c.score?.fused != null) && (
+          <section class="card" aria-labelledby="tr-h">
+            <div class="card-head"><h2 id="tr-h" class="kicker">Last two weeks</h2></div>
+            <TrendChart checkins={checkins} now={now} />
+          </section>
+        )}
         <p class="suggestion">{suggestion(checkins, now)}</p>
       </div>
     </div>

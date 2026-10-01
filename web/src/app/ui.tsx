@@ -149,10 +149,11 @@ export function Trace({ subscribe, beats, seconds = 6, height = 132 }: {
       if (b.length > 2) {
         const t0 = tEnd - seconds * 1000;
         const vis = b.filter((s) => s.t >= t0);
-        let lo = Infinity, hi = -Infinity;
-        for (const s of vis) { if (s.v < lo) lo = s.v; if (s.v > hi) hi = s.v; }
+        // scale to the 3rd–97th percentile so one jolt does not flatten the pulse; clip the rest
+        const sorted = vis.map((s) => s.v).sort((a, b) => a - b);
+        const lo = sorted[Math.floor(sorted.length * 0.03)] ?? 0, hi = sorted[Math.floor(sorted.length * 0.97)] ?? 1;
         const span = Math.max(hi - lo, 0.5);
-        const y = (v: number) => h * 0.84 - ((v - lo) / span) * h * 0.64;
+        const y = (v: number) => Math.min(h - 4, Math.max(4, h * 0.82 - ((v - lo) / span) * h * 0.62));
         ctx.strokeStyle = css.getPropertyValue('--ink');
         ctx.lineWidth = 1.8;
         ctx.lineJoin = 'round';
@@ -229,4 +230,34 @@ export function download(name: string, blob: Blob) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/** The last `days` days on recorder paper: each check-in a dot (calm blue, stress red), a line through the daily averages. */
+export function TrendChart({ checkins, days = 14, now = Date.now() }: { checkins: CheckIn[]; days?: number; now?: number }) {
+  const W = 340, H = 128, L = 8, R = 8, T = 10, B = 22;
+  const start = addDays(now, -(days - 1));
+  const d0 = new Date(start); d0.setHours(0, 0, 0, 0);
+  const t0 = d0.getTime();
+  const span = days * 864e5;
+  const x = (t: number) => L + ((t - t0) / span) * (W - L - R);
+  const y = (v: number) => T + ((1 - v) / 2) * (H - T - B);
+  const pts = checkins.filter((c) => c.createdAt >= t0 && c.score?.fused != null);
+  const daily: [number, number][] = [];
+  for (let i = 0; i < days; i++) {
+    const d = addDays(t0, i);
+    const { score } = dayScore(pts, d);
+    if (score != null) daily.push([x(d + 432e5), y(score)]);
+  }
+  const labels = [0, 7, days - 1].map((i) => addDays(t0, i));
+  return (
+    <svg class="trend-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Scores over the last ${days} days: ${pts.length} check-ins, one dot each, with a line through the daily averages.`}>
+      <rect class="paper" x={L} y={T} width={W - L - R} height={H - T - B} rx="4" />
+      {Array.from({ length: days + 1 }, (_, i) => <line class={`g ${i % 7 === 0 ? 'major' : ''}`} x1={x(addDays(t0, i))} x2={x(addDays(t0, i))} y1={T} y2={H - B} />)}
+      {[-0.5, 0.5].map((v) => <line class="g" x1={L} x2={W - R} y1={y(v)} y2={y(v)} />)}
+      <line class="zero" x1={L} x2={W - R} y1={y(0)} y2={y(0)} />
+      {daily.length > 1 && <polyline class="line" points={daily.map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`).join(' ')} />}
+      {pts.map((c) => <circle class={`pt ${tone(c.score!.fused) || 'mid'}`} cx={x(c.createdAt)} cy={y(c.score!.fused!)} r="3.4" />)}
+      {labels.map((d, i) => <text x={i === 0 ? L : i === 2 ? W - R : x(d)} y={H - 6} text-anchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}>{i === 2 ? 'TODAY' : `${new Date(d).getDate()} ${['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][new Date(d).getMonth()]}`}</text>)}
+    </svg>
+  );
 }

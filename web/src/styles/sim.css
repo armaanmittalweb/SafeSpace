@@ -339,3 +339,4 @@ html.is-embed, html.is-embed body { background: var(--bg); }
 @media (min-width: 921px) {
 .sim .bench { position: sticky; top: 16px; align-self: start; }
 }
+.sim select { width: auto; min-height: 0; font-size: 14.5px; }

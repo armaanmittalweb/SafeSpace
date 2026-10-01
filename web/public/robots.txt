@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /lab/
+Disallow: /embed
+
+Sitemap: https://safespace.amittal.dev/sitemap.xml

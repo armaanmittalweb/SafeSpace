@@ -130,6 +130,7 @@ export function History() {
   const now = Date.now();
   const [month, setMonth] = useState(() => new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1));
   const [day, setDay] = useState<number | null>(null);
+  const [browsing, setBrowsing] = useState(false);
   const [tag, setTag] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const all = s.checkins;
@@ -139,8 +140,11 @@ export function History() {
     return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
   }, [all]);
   const filtered = tag ? all.filter((c) => c.tags.includes(tag)) : all;
+  // Until someone moves the calendar, the list is simply the most recent check-ins (the 1st of a month is not empty).
+  const recentCut = addDays(startOfDay(now), -30);
   const shown = day != null ? filtered.filter((c) => sameDay(c.createdAt, day))
-    : filtered.filter((c) => { const d = new Date(c.createdAt); return d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth(); });
+    : browsing ? filtered.filter((c) => { const d = new Date(c.createdAt); return d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth(); })
+    : filtered.filter((c) => c.createdAt >= recentCut);
   const groups = useMemo(() => {
     const g = new Map<number, CheckIn[]>();
     for (const c of shown) { const k = startOfDay(c.createdAt); g.set(k, [...(g.get(k) ?? []), c]); }
@@ -196,16 +200,16 @@ export function History() {
 
       <div class="history">
         <div class="history-side">
-          <MonthCalendar checkins={filtered} month={month} onMonth={(m) => { setMonth(m); setDay(null); }} selected={day} onSelect={setDay} now={now} />
+          <MonthCalendar checkins={filtered} month={month} onMonth={(m) => { setMonth(m); setDay(null); setBrowsing(true); }} selected={day} onSelect={setDay} now={now} />
           <WeekSummary checkins={all} now={now} />
           <TagTrends checkins={all} onTag={(t) => setTag(t)} />
         </div>
         <section class="history-list" aria-labelledby="list-h">
           <div class="list-head">
-            <h2 id="list-h" class="card-title">{day != null ? longDate(day) : `${MONTHS[month.getMonth()]}`}{tag ? ` · ${tag}` : ''}</h2>
-            {(day != null || tag) && <button type="button" class="link" onClick={() => { setDay(null); setTag(null); }}>Show all</button>}
+            <h2 id="list-h" class="card-title">{day != null ? longDate(day) : browsing ? MONTHS[month.getMonth()] : 'Last 30 days'}{tag ? ` · ${tag}` : ''}</h2>
+            {(day != null || tag || browsing) && <button type="button" class="link" onClick={() => { setDay(null); setTag(null); setBrowsing(false); setMonth(new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1)); }}>Show recent</button>}
           </div>
-          {groups.length === 0 ? <p class="muted pad">No check-ins {tag ? `tagged "${tag}" ` : ''}in {MONTHS[month.getMonth()]}.</p> : groups.map(([d, cs]) => (
+          {groups.length === 0 ? <p class="muted pad">No check-ins {tag ? `tagged "${tag}" ` : ''}{browsing ? `in ${MONTHS[month.getMonth()]}` : 'in the last 30 days'}.</p> : groups.map(([d, cs]) => (
             <div class="day-group">
               <h3 class="kicker day-label">{/\d/.test(relDay(d, now)) ? longDate(d) : `${relDay(d, now)} · ${dayMonth(d)}`}</h3>
               <ul class="hlist">{cs.map((c) => <Row c={c} />)}</ul>
