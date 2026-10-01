@@ -13,8 +13,7 @@
   },
   // Secrets (wrangler secret put): PARAMS_SECRET and INTERNAL_KEY; optionally OPENROUTER_API_KEY,
   // GROQ_API_KEY, GEMINI_API_KEY (narration). Model overrides as vars: OPENROUTER_MODEL, GROQ_MODEL, GEMINI_MODEL.
-  // PLACEHOLDER database_id: replace with the id printed by `wrangler d1 create safespace`.
-  "d1_databases": [{ "binding": "DB", "database_name": "safespace", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "safespace", "database_id": "5809c38f-e585-4255-a6a8-c849234c4ccf" }],
   "ratelimits": [
     // 5 logins (and recovery, password and delete attempts) per minute per IP.
     { "name": "LOGIN_LIMITER", "namespace_id": "4301", "simple": { "limit": 5, "period": 60 } },
