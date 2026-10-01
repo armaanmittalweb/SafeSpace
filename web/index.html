@@ -2,15 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SafeSpace recorder</title>
-    <meta name="description" content="A per-signal, explainable stress detector: four small models trained on WESAD wrist signals, one pen each, scored in your browser. Research demo, not a medical tool." />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SafeSpace: a stress check-in you can take with your phone</title>
+    <meta name="description" content="Rest a fingertip on your phone's camera for 60 seconds. SafeSpace reads your pulse, compares it with your own resting baseline and says plainly what it measured and what it could not. Encrypted on your device. Not a medical device." />
+    <link rel="canonical" href="https://safespace.amittal.dev/" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#edf2ee" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SafeSpace" />
+    <meta property="og:title" content="SafeSpace: a stress check-in you can take with your phone" />
+    <meta property="og:description" content="A 60-second camera check-in, scored against your own resting baseline, with every signal it used and every one it could not measure. Encrypted on your device." />
+    <meta property="og:url" content="https://safespace.amittal.dev/" />
+    <meta property="og:image" content="https://safespace.amittal.dev/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="app"></div>
-    <noscript><p>SafeSpace simulates and scores a session in your browser, so it needs JavaScript.</p></noscript>
+    <noscript>
+      <p>SafeSpace measures your pulse with your phone's camera and scores it in your browser, so it needs JavaScript.</p>
+      <p>What it measures: heart rate and heart-rate variability from one minute of fingertip video, compared with your own resting baseline. With a wearable, skin conductance and skin temperature too. It is not a medical device.</p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

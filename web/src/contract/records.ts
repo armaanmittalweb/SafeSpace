@@ -111,14 +111,9 @@ export interface UserSettings {
 }
 export const DEFAULT_SETTINGS: UserSettings = { keepRawBeats: false, aiNotes: false };
 
-// ---- vault wire types ----
+// ---- vault wire types: defined once in web/src/vault/types.ts (vault agent) ----
 
-export type RecordKind = 'checkin' | 'session' | 'baseline' | 'personal-model' | 'import' | 'settings';
-export interface Me { user: { id: string; email: string; createdAt: string } }
-export interface SealedRecord { id: string; kind: RecordKind; iv: string; ct: string; version: number; updatedAt: string; deleted: boolean }
-export type ApiErrorCode =
-  | 'bad_request' | 'unauthenticated' | 'forbidden' | 'not_found' | 'conflict'
-  | 'rate_limited' | 'too_large' | 'unavailable' | 'server';
-export interface ApiError { error: string; code: ApiErrorCode }
-/** GET /api/auth/sessions, as in EduSched. */
-export interface SessionInfo { id: string; current: boolean; userAgent: string | null; createdAt: string; lastSeenAt: string }
+export type { RecordKind, Me, SealedRecord, SessionInfo } from '../vault/types';
+export type { ErrorCode as ApiErrorCode } from '../vault/types';
+import type { ErrorCode } from '../vault/types';
+export interface ApiError { error: string; code: ErrorCode }

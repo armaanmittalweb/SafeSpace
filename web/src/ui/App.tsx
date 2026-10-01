@@ -40,13 +40,18 @@ function ThemeToggle() {
   );
 }
 
+function Wrap({ bare, children }: { bare: boolean; children: preact.ComponentChildren }) {
+  return bare ? <div>{children}</div> : <main id="main">{children}</main>;
+}
+
 function initialT(): number | null {
   const v = new URLSearchParams(location.search).get('at');
   const n = v === null ? NaN : Number(v);
   return Number.isFinite(n) ? n : null;
 }
 
-export function App() {
+/** `bare`: inside the product's /how-it-works page, which supplies the header, main landmark and theme. */
+export function App({ bare = false }: { bare?: boolean } = {}) {
   const r = useRecorder(initialT());
   const [active, setActive] = useState<Signal | null>(null);
   const [editing, setEditing] = useState(false);
@@ -56,8 +61,8 @@ export function App() {
 
   return (
     <>
-      <a class="skip" href="#recorder">Skip to the recorder</a>
-      <header class="masthead">
+      {!bare && <a class="skip" href="#recorder">Skip to the recorder</a>}
+      {!bare && <header class="masthead">
         <div class="brand">
           <h1><span class="wordmark">SafeSpace</span> <span class="sub">stress recorder</span></h1>
         </div>
@@ -66,8 +71,8 @@ export function App() {
           <a href="#model-notes">Model notes</a>
           <ThemeToggle />
         </nav>
-      </header>
-      <main id="main">
+      </header>}
+      <Wrap bare={bare}>
       <div class="lede">
         <p>Four wrist signals, each with its own small model, each writing its own trace between calm (−1) and stressed (+1). The fused score is the mean of their log-odds. Pull a pen and the fused score is recomputed from the others.</p>
         <p class="not-medical-inline mono">Research demo · not a medical tool</p>
@@ -137,7 +142,7 @@ export function App() {
 
       <Builder scenario={r.scenario} session={r.session} onChange={r.setScenario} />
       <ModelNotes />
-      </main>
+      </Wrap>
 
       <footer class="colophon">
         <p>SafeSpace v2 · four logistic regressions trained on WESAD wrist signals, scored in your browser.</p>

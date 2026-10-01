@@ -50,6 +50,11 @@
 
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 72px;
   --radius: 2px;
+
+  /* app shell (design brief) */
+  --card: #f7faf7; --card-edge: #d4ded7; --radius-card: 14px; --radius-ctl: 10px;
+  --tab-h: 64px; --rail-w: 232px;
+  --good: #2d7a4b; --fair: #a15c00; --poor: #b42318;
 }
 
 /* Night: the same instrument with the panel lights on. */
@@ -73,6 +78,8 @@
     --fill-alpha: 0.2;
     --focus: #dde7e0;
     --sel: rgba(111, 166, 212, 0.22);
+    --good: #7cc79a; --fair: #e3a54f; --poor: #f97066;
+    --card: #152019; --card-edge: #26342e;
   }
 }
 :root[data-theme='dark'] {
@@ -94,6 +101,8 @@
   --fill-alpha: 0.2;
   --focus: #dde7e0;
   --sel: rgba(111, 166, 212, 0.22);
+  --good: #7cc79a; --fair: #e3a54f; --poor: #f97066;
+  --card: #152019; --card-edge: #26342e;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
