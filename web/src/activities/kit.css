@@ -1,0 +1,113 @@
+/* Shared styles for activities, devices, the stress session (inputs agent).
+   Tokens come from styles/tokens.css; the rebuild tokens (--card etc.) fall back to the
+   recorder's paper values so these components render on their own too. */
+.ax {
+  --ax-card: var(--card, var(--paper));
+  --ax-edge: var(--card-edge, var(--paper-edge));
+  --ax-r: var(--radius-card, 14px);
+  --ax-rc: var(--radius-ctl, 10px);
+  --ax-good: var(--good, #2d7a4b);
+  --ax-fair: var(--fair, #a15c00);
+  --ax-poor: var(--poor, #b42318);
+  --st-red: #c0392b; --st-green: #1e7b3c; --st-blue: #1f5fbf; --st-yellow: #946c00;
+  color: var(--ink);
+  font-family: var(--sans);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .ax { --st-red: #f07162; --st-green: #5cc27f; --st-blue: #7aa7f0; --st-yellow: #e6c14d; }
+}
+:root[data-theme='dark'] .ax { --st-red: #f07162; --st-green: #5cc27f; --st-blue: #7aa7f0; --st-yellow: #e6c14d; }
+
+.ax-sheet {
+  background: var(--ax-card); border: 1px solid var(--ax-edge); border-radius: var(--ax-r);
+  padding: 20px 20px 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0;
+}
+@media (max-width: 520px) { .ax-sheet { padding: 16px 16px 18px; border-radius: 12px; } }
+
+.ax-kicker { font: 500 11px/1.3 var(--mono); letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.ax-title { font-size: 22px; font-weight: 600; letter-spacing: -0.012em; line-height: 1.2; }
+.ax-lead { font-size: 16px; line-height: 1.5; color: var(--ink-2); max-width: 58ch; text-wrap: pretty; }
+.ax-small { font-size: 13px; line-height: 1.45; color: var(--muted); }
+.ax-mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* header while running */
+.ax-head { display: flex; align-items: center; gap: 12px; }
+.ax-head .ax-headtext { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ax-head .ax-name { font-size: 16px; font-weight: 600; }
+.ax-clock { font: 500 22px/1 var(--mono); font-variant-numeric: tabular-nums; min-width: 3.2ch; text-align: right; }
+.ax-rule { height: 2px; background: var(--rule); border-radius: 1px; overflow: hidden; margin-top: -8px; }
+.ax-rule > i { display: block; height: 100%; background: var(--ink); transform-origin: left; }
+
+/* buttons */
+.ax-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: var(--ax-rc);
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+  font: 550 15px/1 var(--sans); cursor: pointer; white-space: nowrap; touch-action: manipulation;
+}
+.ax-btn:hover:not(:disabled) { border-color: var(--ink); }
+.ax-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.ax-btn.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.ax-btn.primary:hover:not(:disabled) { background: var(--ink-2); border-color: var(--ink-2); }
+.ax-btn.quiet { border-color: transparent; padding: 0 10px; color: var(--ink-2); }
+.ax-btn.quiet:hover:not(:disabled) { color: var(--ink); border-color: var(--line); }
+.ax-btn.stop { min-height: 40px; padding: 0 14px; font-size: 14px; }
+.ax-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ax-actions.end { justify-content: flex-end; }
+
+/* intro facts */
+.ax-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }
+.ax-facts dt { font: 500 11px/1.9 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.ax-facts dd { color: var(--ink-2); line-height: 1.5; }
+@media (max-width: 420px) { .ax-facts { grid-template-columns: 1fr; gap: 2px; } .ax-facts dd { margin-bottom: 8px; } }
+
+/* the stage: graph paper, where the activity happens */
+.ax-stage {
+  position: relative; border-radius: 10px; border: 1px solid var(--ax-edge);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px; background-position: -1px -1px;
+  overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none;
+}
+.ax-stage.square { aspect-ratio: 1 / 1; width: min(100%, 560px); margin: 0 auto; }
+.ax-stage svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ax-stage-msg {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  background: var(--ax-card); border: 1px solid var(--ax-edge); border-radius: 8px;
+  padding: 8px 12px; font-size: 14px; color: var(--ink-2); pointer-events: none; text-align: center; max-width: 80%;
+}
+
+/* results */
+.ax-results { display: flex; flex-direction: column; margin: 0; }
+.ax-row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 16px; padding: 12px 0; border-top: 1px solid var(--rule); }
+.ax-row:last-child { border-bottom: 1px solid var(--rule); }
+.ax-row dt { font-size: 15px; color: var(--ink-2); }
+.ax-row dd { font: 400 26px/1 var(--mono); font-variant-numeric: tabular-nums; text-align: right; letter-spacing: -0.01em; }
+.ax-row dd small { font-size: 13px; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+.ax-row dd.ax-change { grid-column: 1 / -1; font: 500 14px/1.4 var(--sans); color: var(--ink-2); text-align: left; letter-spacing: 0; }
+.ax-change b { font-weight: 550; color: var(--ink-2); }
+
+.ax-note { font-size: 13px; color: var(--muted); line-height: 1.45; border-left: 2px solid var(--rule); padding-left: 10px; }
+
+/* quality dot */
+.ax-q { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--ink); }
+.ax-q::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ax-good); }
+.ax-q.fair::before { background: var(--ax-fair); } .ax-q.poor::before { background: var(--ax-poor); }
+
+@media (prefers-reduced-motion: reduce) { .ax *, .ax *::before, .ax *::after { transition: none !important; animation: none !important; } }
+
+/* inside a host (the stress session): no sheet, a slim status bar */
+.ax-embedded { display: flex; flex-direction: column; gap: 14px; }
+.ax-embed-bar { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 20px; }
+.ax-embed-clock { font-size: 14px; color: var(--muted); }
+.tt-start { font: 600 3.6px var(--sans); fill: var(--bg); }
+.fd-trail { fill: none; stroke: var(--ink); stroke-opacity: 0.35; stroke-width: 1.5px; stroke-linejoin: round; }
+.fd-ring { fill: none; stroke: var(--ink); stroke-width: 0.6; }
+.fd-ring.near { fill: var(--sel); }
+.fd-dot, .tt-startbtn { fill: var(--ink); }
+.fd-halo { fill: none; stroke: var(--ink); stroke-width: 0.3; stroke-dasharray: 1.2 1.2; }
+.tt-outer { fill: var(--bg); stroke: var(--ink); stroke-width: 0.7; }
+.tt-inner { fill: none; stroke: var(--ink); stroke-width: 0.35; }
+.tt-cross { stroke: var(--ink); stroke-width: 0.35; }
